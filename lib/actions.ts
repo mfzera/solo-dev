@@ -47,23 +47,29 @@ export async function createTask(data: {
 
 export async function updateTask(id: string, data: {
   title?: string;
-  description?: string;
+  description?: string | null;
   tags?: Tag[];
-  estimate?: string;
+  estimate?: string | null;
   flagged?: boolean;
   blocked?: boolean;
   checked?: boolean;
   progress?: number;
+  assignee?: string | null;
+  startDate?: string | null;
+  dueDate?: string | null;
 }) {
   const updateData: Record<string, unknown> = {};
   if (data.title !== undefined) updateData.title = data.title;
-  if (data.description !== undefined) updateData.description = data.description;
+  if (data.description !== undefined) updateData.description = data.description ?? null;
   if (data.tags !== undefined) updateData.tags = serializeTags(data.tags);
-  if (data.estimate !== undefined) updateData.estimate = data.estimate;
+  if (data.estimate !== undefined) updateData.estimate = data.estimate || null;
   if (data.flagged !== undefined) updateData.flagged = data.flagged;
   if (data.blocked !== undefined) updateData.blocked = data.blocked;
   if (data.checked !== undefined) updateData.checked = data.checked;
   if (data.progress !== undefined) updateData.progress = data.progress;
+  if (data.assignee !== undefined) updateData.assignee = data.assignee || null;
+  if (data.startDate !== undefined) updateData.startDate = data.startDate ? new Date(data.startDate) : null;
+  if (data.dueDate !== undefined) updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
 
   await prisma.task.update({ where: { id }, data: updateData });
   revalidateAll();

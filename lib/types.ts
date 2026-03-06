@@ -29,6 +29,9 @@ export interface TaskView {
   checked: boolean;
   progress: number | null;
   sortOrder: number;
+  assignee: string | null;
+  startDate: string | null;
+  dueDate: string | null;
   completedAt: string | null;
   createdAt: string;
 }

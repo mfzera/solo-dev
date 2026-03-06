@@ -2,13 +2,31 @@
 import { useState, useOptimistic, useTransition } from "react";
 import type { TaskView, TaskStatus } from "@/lib/types";
 import { STATUS_LABELS, WIP_LIMITS, ALL_STATUSES } from "@/lib/types";
-import { moveTask } from "@/lib/actions";
+import { moveTask, archiveTask, deleteTask } from "@/lib/actions";
 import Tag from "./Tag";
-import { Plus, SlidersHorizontal, Layers, Check, Flag, AlertCircle } from "lucide-react";
+import NewTaskModal from "./NewTaskModal";
+import EditTaskModal from "./EditTaskModal";
+import { Plus, SlidersHorizontal, Layers, Check, Flag, AlertCircle, Archive, Trash2 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { getISOWeekNumber } from "@/lib/helpers";
 
-function TaskCard({ task, status, index }: { task: TaskView; status: TaskStatus; index: number }) {
+function TaskCard({
+  task,
+  status,
+  index,
+  onArchive,
+  onDelete,
+  onEdit,
+}: {
+  task: TaskView;
+  status: TaskStatus;
+  index: number;
+  onArchive: (id: string) => void;
+  onDelete: (id: string) => void;
+  onEdit: (task: TaskView) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const isDone = status === "done";
   const isInProgress = status === "in-progress";
 
@@ -19,6 +37,9 @@ function TaskCard({ task, status, index }: { task: TaskView; status: TaskStatus;
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => { setHovered(false); setConfirmDelete(false); }}
+          onDoubleClick={() => onEdit(task)}
           style={{
             background: snapshot.isDragging ? "#2a2a2a" : "#1e1e1e",
             border: `1px solid ${task.flagged ? "#4a2a1e" : snapshot.isDragging ? "#444" : "#2a2a2a"}`,
@@ -26,6 +47,7 @@ function TaskCard({ task, status, index }: { task: TaskView; status: TaskStatus;
             padding: "8px 10px",
             cursor: "grab",
             opacity: isDone ? 0.7 : 1,
+            position: "relative",
             ...provided.draggableProps.style,
           }}>
           <div className="flex items-start justify-between gap-2 mb-1.5">
@@ -62,13 +84,86 @@ function TaskCard({ task, status, index }: { task: TaskView; status: TaskStatus;
               {task.tags.map(t => <Tag key={t} tag={t} />)}
             </div>
           )}
+
+          {hovered && !snapshot.isDragging && !confirmDelete && (
+            <div style={{ position: "absolute", top: 5, right: 5, display: "flex", gap: 2 }}>
+              <button
+                onClick={(e) => { e.stopPropagation(); onArchive(task.id); }}
+                title="Archive"
+                style={{
+                  background: "#2a2a2a", border: "1px solid #333",
+                  borderRadius: 4, padding: "2px 5px",
+                  cursor: "pointer", color: "#777",
+                  display: "flex", alignItems: "center",
+                }}>
+                <Archive size={11} />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+                title="Delete"
+                style={{
+                  background: "#2a2a2a", border: "1px solid #333",
+                  borderRadius: 4, padding: "2px 5px",
+                  cursor: "pointer", color: "#777",
+                  display: "flex", alignItems: "center",
+                }}>
+                <Trash2 size={11} />
+              </button>
+            </div>
+          )}
+
+          {confirmDelete && (
+            <div style={{
+              position: "absolute", top: 5, right: 5,
+              display: "flex", alignItems: "center", gap: 4,
+              background: "#1e1e1e", padding: "2px 4px",
+            }}>
+              <span style={{ fontSize: 10, color: "#aaa" }}>Delete?</span>
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
+                style={{
+                  background: "#3a1e1e", border: "1px solid #5a2a2a",
+                  borderRadius: 4, padding: "2px 6px",
+                  cursor: "pointer", color: "#f87171",
+                  fontSize: 10, fontWeight: 600,
+                }}>
+                Yes
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
+                style={{
+                  background: "#2a2a2a", border: "1px solid #333",
+                  borderRadius: 4, padding: "2px 6px",
+                  cursor: "pointer", color: "#888",
+                  fontSize: 10,
+                }}>
+                No
+              </button>
+            </div>
+          )}
         </div>
       )}
     </Draggable>
   );
 }
 
-function Column({ id, tasks, wip }: { id: TaskStatus; tasks: TaskView[]; wip?: number }) {
+function Column({
+  id,
+  tasks,
+  wip,
+  onAddTask,
+  onArchive,
+  onDelete,
+  onEdit,
+}: {
+  id: TaskStatus;
+  tasks: TaskView[];
+  wip?: number;
+  onAddTask: (status: TaskStatus) => void;
+  onArchive: (id: string) => void;
+  onDelete: (id: string) => void;
+  onEdit: (task: TaskView) => void;
+}) {
   const label = STATUS_LABELS[id];
   const count = tasks.length;
   const isInProgress = id === "in-progress";
@@ -87,7 +182,9 @@ function Column({ id, tasks, wip }: { id: TaskStatus; tasks: TaskView[]; wip?: n
             <span style={{ fontSize: 11, color: "#555" }}>{count}/{wip}</span>
           )}
         </div>
-        <button style={{ background: "none", border: "none", cursor: "pointer", color: "#555", padding: 2 }}>
+        <button
+          onClick={() => onAddTask(id)}
+          style={{ background: "none", border: "none", cursor: "pointer", color: "#555", padding: 2 }}>
           <Plus size={13} />
         </button>
       </div>
@@ -113,7 +210,15 @@ function Column({ id, tasks, wip }: { id: TaskStatus; tasks: TaskView[]; wip?: n
               padding: snapshot.isDraggingOver ? 4 : 0,
             }}>
             {tasks.map((task, index) => (
-              <TaskCard key={task.id} task={task} status={id} index={index} />
+              <TaskCard
+                key={task.id}
+                task={task}
+                status={id}
+                index={index}
+                onArchive={onArchive}
+                onDelete={onDelete}
+                onEdit={onEdit}
+              />
             ))}
             {provided.placeholder}
           </div>
@@ -124,8 +229,10 @@ function Column({ id, tasks, wip }: { id: TaskStatus; tasks: TaskView[]; wip?: n
 }
 
 export default function KanbanBoard({ tasks }: { tasks: Record<TaskStatus, TaskView[]> }) {
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [optimisticTasks, setOptimisticTasks] = useOptimistic(tasks);
+  const [modalStatus, setModalStatus] = useState<TaskStatus | null>(null);
+  const [editingTask, setEditingTask] = useState<TaskView | null>(null);
 
   const weekNum = getISOWeekNumber(new Date());
 
@@ -138,7 +245,6 @@ export default function KanbanBoard({ tasks }: { tasks: Record<TaskStatus, TaskV
     const dstStatus = destination.droppableId as TaskStatus;
     const newIndex = destination.index;
 
-    // Optimistic update
     startTransition(async () => {
       setOptimisticTasks(prev => {
         const next = { ...prev };
@@ -157,45 +263,92 @@ export default function KanbanBoard({ tasks }: { tasks: Record<TaskStatus, TaskV
     });
   }
 
+  function handleArchive(taskId: string) {
+    startTransition(async () => {
+      setOptimisticTasks(prev => {
+        const next = { ...prev } as Record<TaskStatus, TaskView[]>;
+        for (const s of ALL_STATUSES) {
+          next[s] = next[s].filter(t => t.id !== taskId);
+        }
+        return next;
+      });
+      await archiveTask(taskId);
+    });
+  }
+
+  function handleDelete(taskId: string) {
+    startTransition(async () => {
+      setOptimisticTasks(prev => {
+        const next = { ...prev } as Record<TaskStatus, TaskView[]>;
+        for (const s of ALL_STATUSES) {
+          next[s] = next[s].filter(t => t.id !== taskId);
+        }
+        return next;
+      });
+      await deleteTask(taskId);
+    });
+  }
+
   return (
-    <div style={{ background: "#242424", border: "1px solid #2e2e2e", borderRadius: 8, padding: "14px 16px" }}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <span style={{ fontWeight: 700, fontSize: 14 }}>Board</span>
-          <span style={{ color: "#555", fontSize: 12 }}>Week {weekNum} · SaaS Builder Pro</span>
+    <>
+      <div style={{ background: "#242424", border: "1px solid #2e2e2e", borderRadius: 8, padding: "14px 16px" }}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <span style={{ fontWeight: 700, fontSize: 14 }}>Board</span>
+            <span style={{ color: "#555", fontSize: 12 }}>Week {weekNum} · SaaS Builder Pro</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button style={{
+              display: "flex", alignItems: "center", gap: 5,
+              background: "#1e1e1e", border: "1px solid #333",
+              borderRadius: 5, padding: "4px 10px", color: "#aaa",
+              fontSize: 12, cursor: "pointer",
+            }}>
+              <SlidersHorizontal size={12} /> Filter
+            </button>
+            <button style={{
+              display: "flex", alignItems: "center", gap: 5,
+              background: "#1e1e1e", border: "1px solid #333",
+              borderRadius: 5, padding: "4px 10px", color: "#aaa",
+              fontSize: 12, cursor: "pointer",
+            }}>
+              <Layers size={12} /> Group
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button style={{
-            display: "flex", alignItems: "center", gap: 5,
-            background: "#1e1e1e", border: "1px solid #333",
-            borderRadius: 5, padding: "4px 10px", color: "#aaa",
-            fontSize: 12, cursor: "pointer",
-          }}>
-            <SlidersHorizontal size={12} /> Filter
-          </button>
-          <button style={{
-            display: "flex", alignItems: "center", gap: 5,
-            background: "#1e1e1e", border: "1px solid #333",
-            borderRadius: 5, padding: "4px 10px", color: "#aaa",
-            fontSize: 12, cursor: "pointer",
-          }}>
-            <Layers size={12} /> Group
-          </button>
-        </div>
+
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
+            {ALL_STATUSES.map(status => (
+              <Column
+                key={status}
+                id={status}
+                tasks={optimisticTasks[status]}
+                wip={WIP_LIMITS[status]}
+                onAddTask={setModalStatus}
+                onArchive={handleArchive}
+                onDelete={handleDelete}
+                onEdit={setEditingTask}
+              />
+            ))}
+          </div>
+        </DragDropContext>
       </div>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8 }}>
-          {ALL_STATUSES.map(status => (
-            <Column
-              key={status}
-              id={status}
-              tasks={optimisticTasks[status]}
-              wip={WIP_LIMITS[status]}
-            />
-          ))}
-        </div>
-      </DragDropContext>
-    </div>
+      <NewTaskModal
+        key={modalStatus ?? "closed"}
+        open={modalStatus !== null}
+        initialStatus={modalStatus ?? "ideas"}
+        onClose={() => setModalStatus(null)}
+      />
+
+      {editingTask && (
+        <EditTaskModal
+          key={editingTask.id}
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+        />
+      )}
+    </>
   );
 }

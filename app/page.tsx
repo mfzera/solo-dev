@@ -1,16 +1,13 @@
 import StatsRow from "@/components/StatsRow";
 import ActivitySection from "@/components/ActivitySection";
 import KanbanBoard from "@/components/KanbanBoard";
-import BottomRow from "@/components/BottomRow";
-import { getTasksByStatus, getStatsData, getActivityData, getWeeklyPlan, getQuickCaptures } from "@/lib/queries";
+import { getTasksByStatus, getStatsData, getActivityData } from "@/lib/queries";
 
 export default async function BoardPage() {
-  const [tasks, stats, activity, weeklyPlan, captures] = await Promise.all([
+  const [tasks, stats, activity] = await Promise.all([
     getTasksByStatus(),
     getStatsData(),
     getActivityData(),
-    getWeeklyPlan(),
-    getQuickCaptures(),
   ]);
 
   return (
@@ -18,7 +15,6 @@ export default async function BoardPage() {
       <StatsRow stats={stats} />
       <ActivitySection data={activity} />
       <KanbanBoard tasks={tasks} />
-      <BottomRow weeklyPlan={weeklyPlan} captures={captures} />
     </div>
   );
 }

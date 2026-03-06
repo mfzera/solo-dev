@@ -6,12 +6,18 @@ import { ALL_STATUSES } from "./types";
 function toTaskView(t: {
   id: string; title: string; description: string | null; status: string; tags: string;
   estimate: string | null; flagged: boolean; blocked: boolean; checked: boolean;
-  progress: number | null; sortOrder: number; completedAt: Date | null; createdAt: Date;
+  progress: number | null; sortOrder: number; assignee: string | null;
+  startDate: Date | null; dueDate: Date | null;
+  completedAt: Date | null; createdAt: Date;
+  [key: string]: unknown;
 }): TaskView {
   return {
     ...t,
     status: t.status as TaskStatus,
     tags: parseTags(t.tags),
+    assignee: t.assignee,
+    startDate: t.startDate?.toISOString() ?? null,
+    dueDate: t.dueDate?.toISOString() ?? null,
     completedAt: t.completedAt?.toISOString() ?? null,
     createdAt: t.createdAt.toISOString(),
   };

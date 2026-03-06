@@ -19,6 +19,9 @@ model Task {
   checked     Boolean   @default(false)
   progress    Int?
   sortOrder   Int       @default(0)
+  assignee    String?
+  startDate   DateTime?
+  dueDate     DateTime?
   archivedAt  DateTime?
   completedAt DateTime?
   createdAt   DateTime  @default(now())

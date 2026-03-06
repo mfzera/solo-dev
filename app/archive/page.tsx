@@ -1,7 +1,7 @@
-export default function ArchivePage() {
-  return (
-    <div style={{ color: "#666", fontSize: 13, paddingTop: 40, textAlign: "center" }}>
-      Archive — coming soon
-    </div>
-  );
+import { getArchivedTasks } from "@/lib/queries";
+import ArchiveClient from "@/components/ArchiveClient";
+
+export default async function ArchivePage() {
+  const tasks = await getArchivedTasks();
+  return <ArchiveClient tasks={tasks} />;
 }

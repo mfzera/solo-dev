@@ -1,19 +1,23 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X } from "lucide-react";
 import { createTask } from "@/lib/actions";
 import type { Tag, TaskStatus } from "@/lib/types";
 import { ALL_TAGS, ALL_STATUSES, STATUS_LABELS } from "@/lib/types";
 
-export default function NewTaskModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function NewTaskModal({ open, onClose, initialStatus = "ideas" }: { open: boolean; onClose: () => void; initialStatus?: TaskStatus }) {
   const [title, setTitle] = useState("");
-  const [status, setStatus] = useState<TaskStatus>("ideas");
+  const [status, setStatus] = useState<TaskStatus>(initialStatus);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [estimate, setEstimate] = useState("");
   const [description, setDescription] = useState("");
   const [flagged, setFlagged] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (open) setStatus(initialStatus);
+  }, [open, initialStatus]);
 
   if (!open) return null;
 
