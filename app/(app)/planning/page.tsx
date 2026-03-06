@@ -1,27 +1,42 @@
 import { getTimelineTasks, getTagConfigs } from "@/lib/queries";
 import PlanningView, { type TimelineTask, type TimelineDay, type TimelineStats } from "@/components/PlanningView";
 
-const TODAY_COL = 9;
-const TOTAL_DAYS = 14;
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
-export default async function PlanningPage() {
+const VIEW_DAYS: Record<string, number> = {
+  week: 7,
+  "2weeks": 14,
+  month: 30,
+};
+
+export default async function PlanningPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string; offset?: string }>;
+}) {
+  const { view: viewParam, offset: offsetParam } = await searchParams;
+
+  const view = (viewParam && VIEW_DAYS[viewParam]) ? viewParam : "2weeks";
+  const offset = parseInt(offsetParam ?? "0") || 0;
+  const TOTAL_DAYS = VIEW_DAYS[view];
+  const ANCHOR = Math.floor(TOTAL_DAYS * 0.4); // today sits ~40% from left when offset=0
+
   const [rawTasks, tagConfigs] = await Promise.all([getTimelineTasks(), getTagConfigs()]);
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
-  const windowStart = new Date(todayStart);
-  windowStart.setDate(windowStart.getDate() - TODAY_COL);
+  const MS_PER_DAY = 86400000;
 
-  const windowEnd = new Date(todayStart);
-  windowEnd.setDate(windowEnd.getDate() + (TOTAL_DAYS - 1 - TODAY_COL));
-  windowEnd.setHours(23, 59, 59, 999);
+  const windowStart = new Date(todayStart.getTime() - ANCHOR * MS_PER_DAY + offset * TOTAL_DAYS * MS_PER_DAY);
+  const windowEnd = new Date(windowStart.getTime() + (TOTAL_DAYS - 1) * MS_PER_DAY + 23 * 3600000 + 59 * 60000 + 59999);
+
+  // today col: where today lands in the current window (can be out of range)
+  const todayCol = Math.round((todayStart.getTime() - windowStart.getTime()) / MS_PER_DAY);
 
   // Build days array
   const days: TimelineDay[] = Array.from({ length: TOTAL_DAYS }, (_, i) => {
-    const date = new Date(windowStart);
-    date.setDate(date.getDate() + i);
+    const date = new Date(windowStart.getTime() + i * MS_PER_DAY);
     return {
       label: String(date.getDate()),
       month: date.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
@@ -47,7 +62,6 @@ export default async function PlanningPage() {
   const tagColorMap = Object.fromEntries(tagConfigs.map(t => [t.name, t.color]));
   const validTags = new Set(tagConfigs.map(t => t.name));
   const firstTag = tagConfigs[0]?.name ?? "backend";
-  const MS_PER_DAY = 86400000;
 
   const timelineTasks: TimelineTask[] = rawTasks
     .filter(t => ["done", "in-progress", "review"].includes(t.status))
@@ -134,9 +148,11 @@ export default async function PlanningPage() {
       days={days}
       monthGroups={monthGroups}
       tasks={timelineTasks}
-      todayCol={TODAY_COL}
+      todayCol={todayCol}
       rangeLabel={rangeLabel}
       stats={stats}
+      view={view}
+      offset={offset}
     />
   );
 }

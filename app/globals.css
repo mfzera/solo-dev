@@ -4,6 +4,40 @@
   box-sizing: border-box;
 }
 
+/* Glitch animation for "noise." word */
+@keyframes glitch-clip-1 {
+  0%, 100% { clip-path: inset(0 0 95% 0); transform: translate(-3px, 0); }
+  20%       { clip-path: inset(30% 0 50% 0); transform: translate(3px, 0); }
+  40%       { clip-path: inset(60% 0 20% 0); transform: translate(-2px, 0); }
+  60%       { clip-path: inset(10% 0 80% 0); transform: translate(2px, 0); }
+  80%       { clip-path: inset(80% 0 5% 0); transform: translate(-3px, 0); }
+}
+
+@keyframes glitch-clip-2 {
+  0%, 100% { clip-path: inset(80% 0 5% 0); transform: translate(3px, 0); }
+  20%       { clip-path: inset(10% 0 80% 0); transform: translate(-2px, 0); }
+  40%       { clip-path: inset(50% 0 30% 0); transform: translate(3px, 0); }
+  60%       { clip-path: inset(70% 0 10% 0); transform: translate(-3px, 0); }
+  80%       { clip-path: inset(20% 0 60% 0); transform: translate(2px, 0); }
+}
+
+.glitch-layer-1 {
+  animation: glitch-clip-1 0.4s steps(1) infinite;
+  color: #00e5ff;
+  mix-blend-mode: screen;
+}
+
+.glitch-layer-2 {
+  animation: glitch-clip-2 0.4s steps(1) infinite 0.1s;
+  color: #ff00c8;
+  mix-blend-mode: screen;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: #1a1a1a;
   color: #e8e8e8;

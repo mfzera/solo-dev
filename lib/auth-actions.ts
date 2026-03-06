@@ -1,34 +1,50 @@
 "use server";
 
 import { prisma } from "./db";
-import { signToken, setSessionCookie, clearSessionCookie } from "./auth";
-import { redirect } from "next/navigation";
-import bcrypt from "bcryptjs";
+import { getSession } from "./auth";
+import { signIn, signOut } from "@/auth";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 export async function login(formData: FormData) {
-  const email = (formData.get("email") as string)?.trim().toLowerCase();
-  const password = formData.get("password") as string;
-
-  if (!email || !password) {
-    return { error: "Email and password are required." };
-  }
-
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
+  try {
+    await signIn("credentials", {
+      email: (formData.get("email") as string)?.trim().toLowerCase(),
+      password: formData.get("password") as string,
+      redirectTo: "/board",
+    });
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
     return { error: "Invalid email or password." };
   }
-
-  const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid) {
-    return { error: "Invalid email or password." };
-  }
-
-  const token = await signToken({ userId: user.id, email: user.email });
-  await setSessionCookie(token);
-  redirect("/board");
 }
 
 export async function logout() {
-  await clearSessionCookie();
-  redirect("/login");
+  await signOut({ redirectTo: "/login" });
+}
+
+export async function getProfile() {
+  const session = await getSession();
+  if (!session) return null;
+  return prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { id: true, email: true, name: true, bio: true, avatarUrl: true },
+  });
+}
+
+export async function updateProfile(data: {
+  name?: string;
+  bio?: string;
+  avatarUrl?: string;
+}): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) return { error: "Not authenticated." };
+  await prisma.user.update({
+    where: { id: session.userId },
+    data: {
+      name: data.name ?? undefined,
+      bio: data.bio ?? undefined,
+      avatarUrl: data.avatarUrl ?? undefined,
+    },
+  });
+  return {};
 }

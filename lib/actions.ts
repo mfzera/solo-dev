@@ -22,6 +22,8 @@ export async function createTask(data: {
   estimate?: string;
   description?: string;
   flagged?: boolean;
+  startDate?: string | null;
+  dueDate?: string | null;
 }) {
   const maxOrder = await prisma.task.aggregate({
     where: { status: data.status, archivedAt: null },
@@ -37,6 +39,8 @@ export async function createTask(data: {
       description: data.description || null,
       flagged: data.flagged || false,
       sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,
+      startDate: data.startDate ? new Date(data.startDate) : null,
+      dueDate: data.dueDate ? new Date(data.dueDate) : null,
     },
   });
 
@@ -283,10 +287,11 @@ export async function deleteTag(id: string) {
 
 export async function createVideoSession(title: string) {
   const max = await prisma.videoSession.aggregate({ _max: { sortOrder: true } });
-  await prisma.videoSession.create({
+  const video = await prisma.videoSession.create({
     data: { title, sortOrder: (max._max.sortOrder ?? -1) + 1 },
   });
   revalidateAll();
+  return video;
 }
 
 export async function updateVideoSession(id: string, data: {

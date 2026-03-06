@@ -59,21 +59,20 @@ export default function VideoView({ initialVideos }: Props) {
     const title = newTitle.trim();
     if (!title) { setAdding(false); return; }
     startTransition(async () => {
-      await createVideoSession(title);
-      // Optimistic: add with temp id
-      const temp: VideoSessionView = {
-        id: "temp-" + Date.now(),
-        title,
-        status: "idea",
-        script: null,
-        ideas: null,
+      const created = await createVideoSession(title);
+      const entry: VideoSessionView = {
+        id: created.id,
+        title: created.title,
+        status: created.status as VideoStatus,
+        script: created.script,
+        ideas: created.ideas,
         tags: [],
-        sortOrder: videos.length,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        sortOrder: created.sortOrder,
+        createdAt: created.createdAt.toISOString(),
+        updatedAt: created.updatedAt.toISOString(),
       };
-      setVideos(prev => [...prev, temp]);
-      setSelectedId(temp.id);
+      setVideos(prev => [...prev, entry]);
+      setSelectedId(entry.id);
       setNewTitle("");
       setAdding(false);
     });

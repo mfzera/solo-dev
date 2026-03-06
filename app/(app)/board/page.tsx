@@ -17,7 +17,7 @@ export default async function BoardPage() {
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <StatsRow stats={stats} />
       <ActivitySection data={activity} tagColors={tagColors} />
-      <KanbanBoard tasks={tasks} />
+      <KanbanBoard tasks={tasks} tagConfigs={tagConfigs} />
     </div>
   );
 }

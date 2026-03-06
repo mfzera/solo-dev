@@ -1,12 +1,12 @@
 "use client";
 import { useState } from "react";
-import { Plus, Tag, LogOut } from "lucide-react";
-import { logout } from "@/lib/auth-actions";
+import { Plus, Tag } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { formatHeaderDate } from "@/lib/helpers";
 import NewTaskModal from "./NewTaskModal";
 import TagsManagerModal from "./TagsManagerModal";
+import ProfileModal, { Avatar, type UserProfile } from "./ProfileModal";
 
 const NAV = [
   { label: "Board",    href: "/board" },
@@ -15,10 +15,16 @@ const NAV = [
   { label: "Archive",  href: "/archive" },
 ];
 
-export default function Header() {
+interface Props {
+  user: UserProfile | null;
+}
+
+export default function Header({ user }: Props) {
   const pathname = usePathname();
   const [modalOpen, setModalOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [localUser, setLocalUser] = useState<UserProfile | null>(user);
 
   return (
     <>
@@ -62,20 +68,18 @@ export default function Header() {
             }}>
             <Tag size={13} />
           </button>
-          <form action={logout}>
+
+          {/* Avatar / profile button */}
+          {localUser && (
             <button
-              type="submit"
-              title="Sign out"
-              style={{
-                display: "flex", alignItems: "center",
-                background: "transparent", color: "#666",
-                border: "1px solid #2a2a2a", borderRadius: 6,
-                padding: "5px 8px", fontSize: 12,
-                cursor: "pointer",
-              }}>
-              <LogOut size={13} />
+              onClick={() => setProfileOpen(true)}
+              title="Profile"
+              style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center" }}
+            >
+              <Avatar user={localUser} size={26} />
             </button>
-          </form>
+          )}
+
           <button
             onClick={() => setModalOpen(true)}
             style={{
@@ -90,8 +94,17 @@ export default function Header() {
           </button>
         </div>
       </header>
+
       <NewTaskModal open={modalOpen} onClose={() => setModalOpen(false)} />
       <TagsManagerModal open={tagsOpen} onClose={() => setTagsOpen(false)} />
+      {localUser && (
+        <ProfileModal
+          open={profileOpen}
+          onClose={() => setProfileOpen(false)}
+          user={localUser}
+          onUpdate={updated => setLocalUser(prev => prev ? { ...prev, ...updated } : prev)}
+        />
+      )}
     </>
   );
 }

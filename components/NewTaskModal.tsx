@@ -4,6 +4,8 @@ import { X } from "lucide-react";
 import { createTask, getTags } from "@/lib/actions";
 import type { Tag, TaskStatus, TagConfig } from "@/lib/types";
 import { ALL_STATUSES, STATUS_LABELS } from "@/lib/types";
+import DatePicker from "./DatePicker";
+import EstimatePicker from "./EstimatePicker";
 
 export default function NewTaskModal({ open, onClose, initialStatus = "ideas" }: { open: boolean; onClose: () => void; initialStatus?: TaskStatus }) {
   const [title, setTitle] = useState("");
@@ -12,6 +14,8 @@ export default function NewTaskModal({ open, onClose, initialStatus = "ideas" }:
   const [estimate, setEstimate] = useState("");
   const [description, setDescription] = useState("");
   const [flagged, setFlagged] = useState(false);
+  const [startDate, setStartDate] = useState<string | null>(null);
+  const [dueDate, setDueDate] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [tagConfigs, setTagConfigs] = useState<TagConfig[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
@@ -33,8 +37,8 @@ export default function NewTaskModal({ open, onClose, initialStatus = "ideas" }:
     e.preventDefault();
     if (!title.trim() || submitting) return;
     setSubmitting(true);
-    await createTask({ title: title.trim(), status, tags: selectedTags, estimate: estimate || undefined, description: description || undefined, flagged });
-    setTitle(""); setStatus("ideas"); setSelectedTags([]); setEstimate(""); setDescription(""); setFlagged(false);
+    await createTask({ title: title.trim(), status, tags: selectedTags, estimate: estimate || undefined, description: description || undefined, flagged, startDate, dueDate });
+    setTitle(""); setStatus("ideas"); setSelectedTags([]); setEstimate(""); setDescription(""); setFlagged(false); setStartDate(null); setDueDate(null);
     setSubmitting(false);
     onClose();
   };
@@ -103,17 +107,30 @@ export default function NewTaskModal({ open, onClose, initialStatus = "ideas" }:
             </div>
           </div>
 
+          {/* Dates */}
+          <div style={{ marginBottom: 12, display: "flex", gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <DatePicker
+                label="Start date"
+                value={startDate}
+                onChange={setStartDate}
+                placeholder="No start date"
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <DatePicker
+                label="Due date"
+                value={dueDate}
+                onChange={setDueDate}
+                placeholder="No due date"
+                minDate={startDate ?? undefined}
+              />
+            </div>
+          </div>
+
           {/* Estimate */}
           <div style={{ marginBottom: 12 }}>
-            <label style={{ fontSize: 11, color: "#666", display: "block", marginBottom: 4 }}>Estimate</label>
-            <input
-              value={estimate} onChange={e => setEstimate(e.target.value)}
-              placeholder="e.g. 2h, 1d, 1w"
-              style={{
-                width: "100%", background: "#111", border: "1px solid #333", borderRadius: 6,
-                padding: "6px 10px", fontSize: 12, color: "#e8e8e8", outline: "none",
-              }}
-            />
+            <EstimatePicker label="Estimate" value={estimate} onChange={setEstimate} />
           </div>
 
           {/* Description */}

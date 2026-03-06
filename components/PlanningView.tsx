@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, Calendar, ChevronDown } from "lucide-react";
+import { useState, useCallback } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { ChevronLeft, ChevronRight, Calendar, ChevronDown, Check } from "lucide-react";
 
 type TagColor = "frontend" | "backend" | "infra" | "bug" | "auth";
 
@@ -55,6 +56,8 @@ export interface PlanningViewProps {
   todayCol: number;
   rangeLabel: string;
   stats: TimelineStats;
+  view: string;
+  offset: number;
 }
 
 const COL_W = 64;
@@ -67,6 +70,16 @@ const FILTERS = [
   { label: "Infra",    tag: "infra"    as TagColor },
   { label: "Bugs",     tag: "bug"      as TagColor },
 ];
+
+const VIEW_OPTIONS = ["week", "2weeks", "month", "custom"] as const;
+const VIEW_LABELS: Record<string, string> = {
+  week: "Week",
+  "2weeks": "2 Weeks",
+  month: "Month",
+  custom: "Custom",
+};
+
+const GROUP_OPTIONS = ["None", "Category"] as const;
 
 function TagBadge({ tag }: { tag: string }) {
   const s = TAG_STYLES[tag as TagColor] ?? TAG_STYLES.backend;
@@ -137,16 +150,95 @@ function TaskBar({ task, todayCol, onHover, hovered }: {
   );
 }
 
-export default function PlanningView({ days, monthGroups, tasks, todayCol, rangeLabel, stats }: PlanningViewProps) {
+function TaskRow({ task, days, todayCol, hoveredTask, setHoveredTask, totalDays }: {
+  task: TimelineTask;
+  days: TimelineDay[];
+  todayCol: number;
+  hoveredTask: string | null;
+  setHoveredTask: (id: string | null) => void;
+  totalDays: number;
+}) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "stretch",
+      borderBottom: "1px solid #242424",
+      minHeight: 48,
+    }}>
+      <div style={{ width: TASK_COL_W, flexShrink: 0, padding: "8px 16px", borderRight: "1px solid #2a2a2a" }}>
+        <div className="flex items-center gap-1.5 mb-1">
+          <div style={{
+            width: 14, height: 14, borderRadius: "50%",
+            border: "1.5px solid #22c55e",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            {!task.ongoing && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e" }} />}
+          </div>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "#d8d8d8", lineHeight: 1.3 }}>{task.name}</span>
+        </div>
+        <div className="flex items-center gap-1 flex-wrap">
+          {task.tags.map(t => <TagBadge key={t} tag={t} />)}
+          <span style={{ fontSize: 10, color: "#555" }}>{task.dateLabel}</span>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, position: "relative", display: "flex" }}>
+        {days.map((d, i) => (
+          <div key={i} style={{
+            width: COL_W, flexShrink: 0,
+            borderLeft: "1px solid #242424",
+            background: d.col === todayCol ? "rgba(212,112,42,0.05)" : "transparent",
+          }} />
+        ))}
+        {todayCol >= 0 && todayCol < totalDays && (
+          <div style={{
+            position: "absolute",
+            left: todayCol * COL_W,
+            top: 0, bottom: 0,
+            width: 1,
+            background: "rgba(212,112,42,0.3)",
+            pointerEvents: "none",
+          }} />
+        )}
+        <TaskBar task={task} todayCol={todayCol} onHover={setHoveredTask} hovered={hoveredTask === task.id} />
+      </div>
+    </div>
+  );
+}
+
+export default function PlanningView({ days, monthGroups, tasks, todayCol, rangeLabel, stats, view, offset }: PlanningViewProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [activeFilter, setActiveFilter] = useState("All tasks");
   const [hoveredTask, setHoveredTask] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState("2 Weeks");
+  const [groupBy, setGroupBy] = useState<"None" | "Category">("Category");
+  const [groupDropdownOpen, setGroupDropdownOpen] = useState(false);
+
+  const navigate = useCallback((newView: string, newOffset: number) => {
+    const params = new URLSearchParams();
+    params.set("view", newView);
+    params.set("offset", String(newOffset));
+    router.push(`${pathname}?${params.toString()}`);
+  }, [router, pathname]);
 
   const filteredTasks = activeFilter === "All tasks"
     ? tasks
     : tasks.filter(t => t.tags.some(tag => tag === activeFilter.toLowerCase() || (activeFilter === "Bugs" && tag === "bug")));
 
   const totalWidth = days.length * COL_W;
+  const totalDays = days.length;
+
+  // Group tasks by primary tag when groupBy === "Category"
+  const groupedTasks: { groupLabel: string | null; tasks: TimelineTask[] }[] = (() => {
+    if (groupBy === "None") return [{ groupLabel: null, tasks: filteredTasks }];
+    const groups: Record<string, TimelineTask[]> = {};
+    for (const task of filteredTasks) {
+      const key = task.tags[0] ?? "other";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(task);
+    }
+    return Object.entries(groups).map(([label, tasks]) => ({ groupLabel: label, tasks }));
+  })();
 
   return (
     <div style={{ fontFamily: "var(--font-inter, system-ui, sans-serif)", color: "#e8e8e8" }}>
@@ -166,27 +258,31 @@ export default function PlanningView({ days, monthGroups, tasks, todayCol, range
         </div>
 
         <div className="flex items-center gap-2">
-          {["Week", "2 Weeks", "Month", "Custom"].map(v => (
-            <button key={v} onClick={() => setActiveView(v)}
+          {VIEW_OPTIONS.map(v => (
+            <button key={v} onClick={() => v !== "custom" ? navigate(v, 0) : undefined}
               style={{
-                background: activeView === v ? "#e8e8e8" : "transparent",
-                color: activeView === v ? "#111" : "#888",
-                border: activeView === v ? "none" : "1px solid #333",
+                background: view === v ? "#e8e8e8" : "transparent",
+                color: view === v ? "#111" : "#888",
+                border: view === v ? "none" : "1px solid #333",
                 borderRadius: 5, padding: "4px 12px",
-                fontSize: 12, fontWeight: activeView === v ? 600 : 400,
+                fontSize: 12, fontWeight: view === v ? 600 : 400,
                 cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 5,
               }}>
-              {v === "Custom" && <Calendar size={12} />}
-              {v}
+              {v === "custom" && <Calendar size={12} />}
+              {VIEW_LABELS[v]}
             </button>
           ))}
           <div style={{ width: 1, height: 20, background: "#333", margin: "0 4px" }} />
-          <button style={{ background: "none", border: "1px solid #333", borderRadius: 5, padding: "4px 6px", cursor: "pointer", color: "#888" }}>
+          <button
+            onClick={() => navigate(view, offset - 1)}
+            style={{ background: "none", border: "1px solid #333", borderRadius: 5, padding: "4px 6px", cursor: "pointer", color: "#888" }}>
             <ChevronLeft size={14} />
           </button>
           <span style={{ fontSize: 12, color: "#ccc", whiteSpace: "nowrap", padding: "0 4px" }}>{rangeLabel}</span>
-          <button style={{ background: "none", border: "1px solid #333", borderRadius: 5, padding: "4px 6px", cursor: "pointer", color: "#888" }}>
+          <button
+            onClick={() => navigate(view, offset + 1)}
+            style={{ background: "none", border: "1px solid #333", borderRadius: 5, padding: "4px 6px", cursor: "pointer", color: "#888" }}>
             <ChevronRight size={14} />
           </button>
         </div>
@@ -214,57 +310,93 @@ export default function PlanningView({ days, monthGroups, tasks, todayCol, range
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" style={{ position: "relative" }}>
           <span style={{ color: "#666", fontSize: 12 }}>Group by:</span>
-          <button style={{
-            display: "flex", alignItems: "center", gap: 4,
-            background: "#1e1e1e", border: "1px solid #333",
-            borderRadius: 5, padding: "4px 10px",
-            fontSize: 12, color: "#ccc", cursor: "pointer",
-          }}>
-            Category <ChevronDown size={12} />
+          <button
+            onClick={() => setGroupDropdownOpen(o => !o)}
+            style={{
+              display: "flex", alignItems: "center", gap: 4,
+              background: "#1e1e1e", border: "1px solid #333",
+              borderRadius: 5, padding: "4px 10px",
+              fontSize: 12, color: "#ccc", cursor: "pointer",
+            }}>
+            {groupBy} <ChevronDown size={12} />
           </button>
+          {groupDropdownOpen && (
+            <>
+              <div
+                style={{ position: "fixed", inset: 0, zIndex: 9 }}
+                onClick={() => setGroupDropdownOpen(false)}
+              />
+              <div style={{
+                position: "absolute", top: "calc(100% + 4px)", right: 0,
+                background: "#1e1e1e", border: "1px solid #333",
+                borderRadius: 6, overflow: "hidden", zIndex: 10,
+                minWidth: 120, boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+              }}>
+                {GROUP_OPTIONS.map(opt => (
+                  <button key={opt}
+                    onClick={() => { setGroupBy(opt); setGroupDropdownOpen(false); }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 8,
+                      width: "100%", padding: "8px 12px",
+                      background: "none", border: "none",
+                      fontSize: 12, color: groupBy === opt ? "#e8e8e8" : "#888",
+                      cursor: "pointer", textAlign: "left",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "#2a2a2a")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "none")}
+                  >
+                    <span style={{ width: 14, display: "flex", justifyContent: "center" }}>
+                      {groupBy === opt && <Check size={12} color="#60a5fa" />}
+                    </span>
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       {/* Stats row */}
       <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-        <div style={{ background: "#f9f9f9", border: "1px solid #e5e5e5", borderRadius: 8, padding: "14px 16px", color: "#111" }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: "#999", letterSpacing: "0.06em", marginBottom: 6 }}>AVG DURATION</div>
-          <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1, marginBottom: 2 }}>{stats.avgDays}</div>
+        <div style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 16px" }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: "#555", letterSpacing: "0.06em", marginBottom: 6 }}>AVG DURATION</div>
+          <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1, marginBottom: 2, color: "#e8e8e8" }}>{stats.avgDays}</div>
           <div style={{ fontSize: 12, color: "#666" }}>days / task</div>
         </div>
-        <div style={{ background: "#f9f9f9", border: "1px solid #e5e5e5", borderRadius: 8, padding: "14px 16px", color: "#111" }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: "#999", letterSpacing: "0.06em", marginBottom: 6 }}>LONGEST TASK</div>
+        <div style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 16px" }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: "#555", letterSpacing: "0.06em", marginBottom: 6 }}>LONGEST TASK</div>
           {stats.longestTask ? (
             <>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, lineHeight: 1.3 }}>{stats.longestTask.name}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, lineHeight: 1.3, color: "#e8e8e8" }}>{stats.longestTask.name}</div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span style={{ fontSize: 12, color: "#555" }}>{stats.longestTask.duration}</span>
+                <span style={{ fontSize: 12, color: "#666" }}>{stats.longestTask.duration}</span>
                 {stats.longestTask.tags.slice(0, 1).map(t => <TagBadge key={t} tag={t} />)}
               </div>
             </>
           ) : (
-            <div style={{ fontSize: 12, color: "#999" }}>—</div>
+            <div style={{ fontSize: 12, color: "#555" }}>—</div>
           )}
         </div>
-        <div style={{ background: "#f9f9f9", border: "1px solid #e5e5e5", borderRadius: 8, padding: "14px 16px", color: "#111" }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: "#999", letterSpacing: "0.06em", marginBottom: 6 }}>SHORTEST TASK</div>
+        <div style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 16px" }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: "#555", letterSpacing: "0.06em", marginBottom: 6 }}>SHORTEST TASK</div>
           {stats.shortestTask ? (
             <>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, lineHeight: 1.3 }}>{stats.shortestTask.name}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, lineHeight: 1.3, color: "#e8e8e8" }}>{stats.shortestTask.name}</div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span style={{ fontSize: 12, color: "#555" }}>{stats.shortestTask.duration}</span>
+                <span style={{ fontSize: 12, color: "#666" }}>{stats.shortestTask.duration}</span>
                 {stats.shortestTask.tags.slice(0, 1).map(t => <TagBadge key={t} tag={t} />)}
               </div>
             </>
           ) : (
-            <div style={{ fontSize: 12, color: "#999" }}>—</div>
+            <div style={{ fontSize: 12, color: "#555" }}>—</div>
           )}
         </div>
-        <div style={{ background: "#f9f9f9", border: "1px solid #e5e5e5", borderRadius: 8, padding: "14px 16px", color: "#111" }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: "#999", letterSpacing: "0.06em", marginBottom: 6 }}>COMPLETED</div>
-          <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1, marginBottom: 2 }}>{stats.completedCount}</div>
+        <div style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", borderRadius: 8, padding: "14px 16px" }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: "#555", letterSpacing: "0.06em", marginBottom: 6 }}>COMPLETED</div>
+          <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1, marginBottom: 2, color: "#e8e8e8" }}>{stats.completedCount}</div>
           <div style={{ fontSize: 12, color: "#666", marginBottom: 8 }}>
             tasks{stats.ongoingCount > 0 ? ` · ${stats.ongoingCount} in progress` : ""}
           </div>
@@ -279,41 +411,41 @@ export default function PlanningView({ days, monthGroups, tasks, todayCol, range
       </div>
 
       {/* Timeline grid */}
-      <div style={{ background: "#fff", border: "1px solid #e5e5e5", borderRadius: 8, overflow: "hidden", color: "#111" }}>
+      <div style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", borderRadius: 8, overflow: "hidden" }}>
         {filteredTasks.length === 0 ? (
-          <div style={{ padding: "40px 16px", textAlign: "center", color: "#999", fontSize: 13 }}>
+          <div style={{ padding: "40px 16px", textAlign: "center", color: "#555", fontSize: 13 }}>
             No completed or in-progress tasks in this period.
-            <div style={{ fontSize: 11, color: "#bbb", marginTop: 4 }}>Move tasks to In Progress or Done to see them here.</div>
+            <div style={{ fontSize: 11, color: "#444", marginTop: 4 }}>Move tasks to In Progress or Done to see them here.</div>
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <div style={{ minWidth: TASK_COL_W + totalWidth + 1 }}>
 
               {/* Month header */}
-              <div className="flex" style={{ borderBottom: "1px solid #e5e5e5", background: "#fafafa" }}>
-                <div style={{ width: TASK_COL_W, flexShrink: 0, padding: "8px 16px", fontSize: 11, fontWeight: 600, color: "#999" }}>TASK</div>
+              <div className="flex" style={{ borderBottom: "1px solid #2a2a2a", background: "#1a1a1a" }}>
+                <div style={{ width: TASK_COL_W, flexShrink: 0, padding: "8px 16px", fontSize: 11, fontWeight: 600, color: "#555" }}>TASK</div>
                 <div style={{ flex: 1, position: "relative", display: "flex" }}>
                   {monthGroups.map(({ label, count }) => (
                     <div key={label} style={{
                       width: count * COL_W,
                       padding: "4px 8px",
-                      fontSize: 11, fontWeight: 600, color: "#aaa",
-                      borderLeft: "1px solid #eee",
+                      fontSize: 11, fontWeight: 600, color: "#666",
+                      borderLeft: "1px solid #2a2a2a",
                     }}>{label}</div>
                   ))}
                 </div>
               </div>
 
               {/* Day header */}
-              <div className="flex" style={{ borderBottom: "1px solid #e5e5e5", background: "#fafafa" }}>
+              <div className="flex" style={{ borderBottom: "1px solid #2a2a2a", background: "#1a1a1a" }}>
                 <div style={{ width: TASK_COL_W, flexShrink: 0 }} />
                 {days.map((d, i) => (
                   <div key={i} style={{
                     width: COL_W, flexShrink: 0, textAlign: "center",
                     padding: "4px 0",
-                    borderLeft: "1px solid #eee",
+                    borderLeft: "1px solid #2a2a2a",
                   }}>
-                    <div style={{ fontSize: 10, color: "#aaa", lineHeight: 1 }}>{d.weekday}</div>
+                    <div style={{ fontSize: 10, color: "#555", lineHeight: 1 }}>{d.weekday}</div>
                     {d.col === todayCol ? (
                       <div style={{
                         width: 22, height: 22, borderRadius: "50%",
@@ -323,54 +455,44 @@ export default function PlanningView({ days, monthGroups, tasks, todayCol, range
                         margin: "2px auto 0",
                       }}>{d.label}</div>
                     ) : (
-                      <div style={{ fontSize: 12, fontWeight: 500, color: "#555", marginTop: 2 }}>{d.label}</div>
+                      <div style={{ fontSize: 12, fontWeight: 500, color: "#666", marginTop: 2 }}>{d.label}</div>
                     )}
                   </div>
                 ))}
               </div>
 
-              {/* Task rows */}
-              {filteredTasks.map(task => (
-                <div key={task.id} style={{
-                  display: "flex", alignItems: "stretch",
-                  borderBottom: "1px solid #f0f0f0",
-                  minHeight: 48,
-                }}>
-                  <div style={{ width: TASK_COL_W, flexShrink: 0, padding: "8px 16px", borderRight: "1px solid #eee" }}>
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <div style={{
-                        width: 14, height: 14, borderRadius: "50%",
-                        border: "1.5px solid #22c55e",
-                        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                      }}>
-                        {!task.ongoing && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e" }} />}
-                      </div>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: "#111", lineHeight: 1.3 }}>{task.name}</span>
-                    </div>
-                    <div className="flex items-center gap-1 flex-wrap">
-                      {task.tags.map(t => <TagBadge key={t} tag={t} />)}
-                      <span style={{ fontSize: 10, color: "#aaa" }}>{task.dateLabel}</span>
-                    </div>
-                  </div>
-
-                  <div style={{ flex: 1, position: "relative", display: "flex" }}>
-                    {days.map((d, i) => (
-                      <div key={i} style={{
-                        width: COL_W, flexShrink: 0,
-                        borderLeft: "1px solid #f0f0f0",
-                        background: d.col === todayCol ? "rgba(212,112,42,0.04)" : "transparent",
-                      }} />
-                    ))}
+              {/* Task rows (grouped or flat) */}
+              {groupedTasks.map(({ groupLabel, tasks: groupTasks }) => (
+                <div key={groupLabel ?? "__all"}>
+                  {groupLabel && (
                     <div style={{
-                      position: "absolute",
-                      left: todayCol * COL_W,
-                      top: 0, bottom: 0,
-                      width: 1,
-                      background: "rgba(212,112,42,0.3)",
-                      pointerEvents: "none",
-                    }} />
-                    <TaskBar task={task} todayCol={todayCol} onHover={setHoveredTask} hovered={hoveredTask === task.id} />
-                  </div>
+                      display: "flex", alignItems: "center",
+                      background: "#181818",
+                      borderBottom: "1px solid #2a2a2a",
+                      padding: "5px 16px", gap: 8,
+                    }}>
+                      <div style={{
+                        width: 8, height: 8, borderRadius: "50%",
+                        background: TAG_STYLES[groupLabel as TagColor]?.color ?? "#888",
+                        flexShrink: 0,
+                      }} />
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#666", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                        {groupLabel}
+                      </span>
+                      <span style={{ fontSize: 11, color: "#444" }}>{groupTasks.length} task{groupTasks.length !== 1 ? "s" : ""}</span>
+                    </div>
+                  )}
+                  {groupTasks.map(task => (
+                    <TaskRow
+                      key={task.id}
+                      task={task}
+                      days={days}
+                      todayCol={todayCol}
+                      hoveredTask={hoveredTask}
+                      setHoveredTask={setHoveredTask}
+                      totalDays={totalDays}
+                    />
+                  ))}
                 </div>
               ))}
 

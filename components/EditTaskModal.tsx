@@ -1,14 +1,11 @@
 "use client";
 import { useState, useEffect, useTransition } from "react";
-import { X, Flag, AlertCircle, Archive, Trash2, User, Calendar, Clock } from "lucide-react";
+import { X, Flag, AlertCircle, Archive, Trash2, User } from "lucide-react";
+import DatePicker from "./DatePicker";
+import EstimatePicker from "./EstimatePicker";
 import { updateTask, archiveTask, deleteTask, getTags } from "@/lib/actions";
 import type { Tag, TaskStatus, TaskView, TagConfig } from "@/lib/types";
 import { ALL_STATUSES, STATUS_LABELS } from "@/lib/types";
-
-function toDateInput(iso: string | null): string {
-  if (!iso) return "";
-  return iso.slice(0, 10);
-}
 
 export default function EditTaskModal({
   task,
@@ -23,8 +20,8 @@ export default function EditTaskModal({
   const [selectedTags, setSelectedTags] = useState<Tag[]>(task.tags);
   const [estimate, setEstimate] = useState(task.estimate ?? "");
   const [assignee, setAssignee] = useState(task.assignee ?? "");
-  const [startDate, setStartDate] = useState(toDateInput(task.startDate));
-  const [dueDate, setDueDate] = useState(toDateInput(task.dueDate));
+  const [startDate, setStartDate] = useState<string | null>(task.startDate ?? null);
+  const [dueDate, setDueDate] = useState<string | null>(task.dueDate ?? null);
   const [flagged, setFlagged] = useState(task.flagged);
   const [blocked, setBlocked] = useState(task.blocked);
   const [progress, setProgress] = useState(task.progress ?? 0);
@@ -152,51 +149,24 @@ export default function EditTaskModal({
             <div style={{ fontSize: 10, fontWeight: 600, color: "#555", letterSpacing: "0.07em", marginBottom: 8 }}>PLANNING</div>
             <div style={{ display: "flex", gap: 10 }}>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: 11, color: "#666", display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
-                  <Calendar size={11} /> Start date
-                </label>
-                <input
-                  type="date"
+                <DatePicker
+                  label="Start date"
                   value={startDate}
-                  onChange={e => setStartDate(e.target.value)}
-                  style={{
-                    width: "100%", background: "#111", border: "1px solid #2e2e2e",
-                    borderRadius: 6, padding: "5px 8px", fontSize: 12,
-                    color: startDate ? "#e8e8e8" : "#555", outline: "none",
-                    colorScheme: "dark",
-                  }}
+                  onChange={setStartDate}
+                  placeholder="No start date"
                 />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: 11, color: "#666", display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
-                  <Calendar size={11} /> Due date
-                </label>
-                <input
-                  type="date"
+                <DatePicker
+                  label="Due date"
                   value={dueDate}
-                  onChange={e => setDueDate(e.target.value)}
-                  style={{
-                    width: "100%", background: "#111", border: `1px solid ${dueDate && new Date(dueDate) < new Date() ? "#5a2a2a" : "#2e2e2e"}`,
-                    borderRadius: 6, padding: "5px 8px", fontSize: 12,
-                    color: dueDate ? (new Date(dueDate) < new Date() ? "#f87171" : "#e8e8e8") : "#555",
-                    outline: "none", colorScheme: "dark",
-                  }}
+                  onChange={setDueDate}
+                  placeholder="No due date"
+                  minDate={startDate ?? undefined}
                 />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: 11, color: "#666", display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
-                  <Clock size={11} /> Estimate
-                </label>
-                <input
-                  value={estimate}
-                  onChange={e => setEstimate(e.target.value)}
-                  placeholder="2h, 1d, 1w"
-                  style={{
-                    width: "100%", background: "#111", border: "1px solid #2e2e2e",
-                    borderRadius: 6, padding: "5px 8px", fontSize: 12,
-                    color: "#e8e8e8", outline: "none",
-                  }}
-                />
+                <EstimatePicker label="Estimate" value={estimate} onChange={setEstimate} />
               </div>
             </div>
           </div>
