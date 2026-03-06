@@ -1,11 +1,12 @@
 import { Hono } from "hono";
 import { db } from "../db/index.js";
-import { activityLogs, tasks, tagConfigs } from "../db/schema.js";
+import { activityLogs, tasks } from "../db/schema.js";
 import { eq, and, gte, lt, isNotNull, inArray } from "drizzle-orm";
-import { ok, err } from "../response.js";
+import { ok } from "../response.js";
 import { createId } from "@paralleldrive/cuid2";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
+import type { AppEnv } from "../types.js";
 
 function parseTags(json: string): string[] {
   try { return JSON.parse(json); } catch { return []; }
@@ -13,9 +14,10 @@ function parseTags(json: string): string[] {
 
 type ActivityCell = { date: string; level: number; count: number };
 
-export const activityRouter = new Hono()
+export const activityRouter = new Hono<AppEnv>()
   // GET /activity/heatmap — 52-week heatmap grid
   .get("/heatmap", async (c) => {
+    const userId = c.get("userId");
     const now = new Date();
     const startOfToday = new Date(now);
     startOfToday.setHours(0, 0, 0, 0);
@@ -30,7 +32,7 @@ export const activityRouter = new Hono()
     const logs = await db
       .select({ occurredAt: activityLogs.occurredAt })
       .from(activityLogs)
-      .where(and(gte(activityLogs.occurredAt, startDate), eq(activityLogs.action, "completed")));
+      .where(and(eq(activityLogs.userId, userId), gte(activityLogs.occurredAt, startDate), eq(activityLogs.action, "completed")));
 
     const dayCounts = new Map<string, number>();
     for (const log of logs) {
@@ -136,6 +138,7 @@ export const activityRouter = new Hono()
   .get("/day", zValidator("query", z.object({
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "date must be in YYYY-MM-DD format"),
   })), async (c) => {
+    const userId = c.get("userId");
     const { date } = c.req.valid("query");
 
     const dayStart = new Date(date + "T00:00:00.000Z");
@@ -146,6 +149,7 @@ export const activityRouter = new Hono()
       .from(activityLogs)
       .where(
         and(
+          eq(activityLogs.userId, userId),
           eq(activityLogs.action, "completed"),
           gte(activityLogs.occurredAt, dayStart),
           lt(activityLogs.occurredAt, dayEnd),
@@ -159,7 +163,7 @@ export const activityRouter = new Hono()
     const completedTasks = await db
       .select({ id: tasks.id, title: tasks.title, tags: tasks.tags })
       .from(tasks)
-      .where(inArray(tasks.id, taskIds));
+      .where(and(inArray(tasks.id, taskIds), eq(tasks.userId, userId)));
 
     return ok(c, completedTasks.map(t => ({ ...t, tags: parseTags(t.tags) })));
   })
@@ -169,8 +173,9 @@ export const activityRouter = new Hono()
     action: z.string().min(1),
     taskId: z.string().nullable().optional(),
   })), async (c) => {
+    const userId = c.get("userId");
     const { action, taskId } = c.req.valid("json");
     const id = createId();
-    await db.insert(activityLogs).values({ id, action, taskId: taskId ?? null, occurredAt: new Date() });
+    await db.insert(activityLogs).values({ id, userId, action, taskId: taskId ?? null, occurredAt: new Date() });
     return ok(c, { id }, undefined, 201);
   });

@@ -1,49 +1,55 @@
 import type { TaskStatus, TaskView, StatsData, ActivityData, WeeklyPlanView, QuickCaptureView, VideoSessionView } from "./types";
 import type { TagConfig } from "./types";
-import {
-  getTasksByStatus as apiGetTasksByStatus,
-  getArchivedTasks as apiGetArchivedTasks,
-  getTimelineTasks as apiGetTimelineTasks,
-  getStatsData as apiGetStatsData,
-  getActivityData as apiGetActivityData,
-  getWeeklyPlan as apiGetWeeklyPlan,
-  getQuickCaptures as apiGetQuickCaptures,
-  getTagConfigs as apiGetTagConfigs,
-  getVideoSessions as apiGetVideoSessions,
-} from "./api-client";
+import { createApiClient } from "./api-client";
+import { getSession } from "./auth";
+
+async function getApi() {
+  const session = await getSession();
+  if (!session) throw new Error("Unauthorized");
+  return createApiClient(session.userId);
+}
 
 export async function getTasksByStatus(): Promise<Record<TaskStatus, TaskView[]>> {
-  return apiGetTasksByStatus();
+  const api = await getApi();
+  return api.getTasksByStatus();
 }
 
 export async function getStatsData(): Promise<StatsData> {
-  return apiGetStatsData();
+  const api = await getApi();
+  return api.getStatsData();
 }
 
 export async function getActivityData(): Promise<ActivityData> {
-  return apiGetActivityData();
+  const api = await getApi();
+  return api.getActivityData();
 }
 
 export async function getWeeklyPlan(): Promise<WeeklyPlanView[]> {
-  return apiGetWeeklyPlan();
+  const api = await getApi();
+  return api.getWeeklyPlan();
 }
 
 export async function getQuickCaptures(limit = 5): Promise<QuickCaptureView[]> {
-  return apiGetQuickCaptures(limit);
+  const api = await getApi();
+  return api.getQuickCaptures(limit);
 }
 
 export async function getArchivedTasks(): Promise<TaskView[]> {
-  return apiGetArchivedTasks();
+  const api = await getApi();
+  return api.getArchivedTasks();
 }
 
 export async function getTimelineTasks(): Promise<TaskView[]> {
-  return apiGetTimelineTasks();
+  const api = await getApi();
+  return api.getTimelineTasks();
 }
 
 export async function getTagConfigs(): Promise<TagConfig[]> {
-  return apiGetTagConfigs();
+  const api = await getApi();
+  return api.getTagConfigs();
 }
 
 export async function getVideoSessions(): Promise<VideoSessionView[]> {
-  return apiGetVideoSessions();
+  const api = await getApi();
+  return api.getVideoSessions();
 }

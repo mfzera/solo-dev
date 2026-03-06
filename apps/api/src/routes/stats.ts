@@ -3,6 +3,7 @@ import { db } from "../db/index.js";
 import { tasks, activityLogs, tagConfigs } from "../db/schema.js";
 import { eq, and, gte, lt, isNull, asc } from "drizzle-orm";
 import { ok } from "../response.js";
+import type { AppEnv } from "../types.js";
 
 function parseTags(json: string): string[] {
   try { return JSON.parse(json); } catch { return []; }
@@ -21,8 +22,9 @@ function toTaskView(t: typeof tasks.$inferSelect) {
   };
 }
 
-export const statsRouter = new Hono()
+export const statsRouter = new Hono<AppEnv>()
   .get("/", async (c) => {
+    const userId = c.get("userId");
     const now = new Date();
     const startOfToday = new Date(now);
     startOfToday.setHours(0, 0, 0, 0);
@@ -31,8 +33,8 @@ export const statsRouter = new Hono()
     const dow = startOfWeek.getDay();
     startOfWeek.setDate(startOfWeek.getDate() - dow + (dow === 0 ? -6 : 1));
 
-    const allTasks = await db.select().from(tasks).where(isNull(tasks.archivedAt));
-    const tagConfigList = await db.select().from(tagConfigs).orderBy(asc(tagConfigs.sortOrder));
+    const allTasks = await db.select().from(tasks).where(and(eq(tasks.userId, userId), isNull(tasks.archivedAt)));
+    const tagConfigList = await db.select().from(tagConfigs).where(eq(tagConfigs.userId, userId)).orderBy(asc(tagConfigs.sortOrder));
 
     const doneToday = allTasks.filter(
       t => t.status === "done" && t.completedAt && t.completedAt >= startOfToday,
@@ -68,7 +70,6 @@ export const statsRouter = new Hono()
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map(toTaskView);
 
-    // Weekly productivity (last 7 days) — single query
     const sevenDaysAgo = new Date(startOfToday);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
     const tomorrow = new Date(startOfToday);
@@ -79,6 +80,7 @@ export const statsRouter = new Hono()
       .from(activityLogs)
       .where(
         and(
+          eq(activityLogs.userId, userId),
           eq(activityLogs.action, "completed"),
           gte(activityLogs.occurredAt, sevenDaysAgo),
           lt(activityLogs.occurredAt, tomorrow),

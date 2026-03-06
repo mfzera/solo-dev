@@ -5,14 +5,18 @@ if (!API_SECRET && typeof window === "undefined") {
   console.warn("[api] API_SECRET is not set — all API requests will return 401");
 }
 
+type FetchInit = RequestInit & { userId?: string };
+
 /** Throws on non-OK responses. Use in server actions and API client. */
-export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+export async function apiFetch<T>(path: string, init?: FetchInit): Promise<T> {
+  const { userId, ...restInit } = init ?? {};
   const res = await fetch(`${API_URL}${path}`, {
-    ...init,
+    ...restInit,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${API_SECRET}`,
-      ...init?.headers,
+      ...(userId ? { "X-User-Id": userId } : {}),
+      ...restInit?.headers,
     },
     cache: "no-store",
   });

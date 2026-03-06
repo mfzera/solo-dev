@@ -3,9 +3,10 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { db } from "../db/index.js";
 import { videoSessions } from "../db/schema.js";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, and } from "drizzle-orm";
 import { ok, err } from "../response.js";
 import { createId } from "@paralleldrive/cuid2";
+import type { AppEnv } from "../types.js";
 
 const VideoStatusSchema = z.enum(["idea", "scripting", "filming", "editing", "published"]);
 
@@ -35,30 +36,33 @@ function toVideoView(v: typeof videoSessions.$inferSelect) {
   };
 }
 
-export const videosRouter = new Hono()
+export const videosRouter = new Hono<AppEnv>()
   // GET /videos
   .get("/", async (c) => {
-    const videos = await db.select().from(videoSessions).orderBy(asc(videoSessions.sortOrder));
+    const userId = c.get("userId");
+    const videos = await db.select().from(videoSessions).where(eq(videoSessions.userId, userId)).orderBy(asc(videoSessions.sortOrder));
     return ok(c, videos.map(toVideoView));
   })
 
   // GET /videos/:id
   .get("/:id", async (c) => {
+    const userId = c.get("userId");
     const id = c.req.param("id");
-    const [video] = await db.select().from(videoSessions).where(eq(videoSessions.id, id));
+    const [video] = await db.select().from(videoSessions).where(and(eq(videoSessions.id, id), eq(videoSessions.userId, userId)));
     if (!video) return err(c, "Video session not found", 404);
     return ok(c, toVideoView(video));
   })
 
   // POST /videos
   .post("/", zValidator("json", CreateVideoSchema), async (c) => {
+    const userId = c.get("userId");
     const { title } = c.req.valid("json");
-    const all = await db.select({ sortOrder: videoSessions.sortOrder }).from(videoSessions).orderBy(asc(videoSessions.sortOrder));
+    const all = await db.select({ sortOrder: videoSessions.sortOrder }).from(videoSessions).where(eq(videoSessions.userId, userId)).orderBy(asc(videoSessions.sortOrder));
     const maxOrder = all.length > 0 ? all[all.length - 1].sortOrder : -1;
 
     const id = createId();
     const now = new Date();
-    await db.insert(videoSessions).values({ id, title, sortOrder: maxOrder + 1, createdAt: now, updatedAt: now });
+    await db.insert(videoSessions).values({ id, userId, title, sortOrder: maxOrder + 1, createdAt: now, updatedAt: now });
 
     const [created] = await db.select().from(videoSessions).where(eq(videoSessions.id, id));
     return ok(c, toVideoView(created), undefined, 201);
@@ -66,10 +70,11 @@ export const videosRouter = new Hono()
 
   // PATCH /videos/:id
   .patch("/:id", zValidator("json", UpdateVideoSchema), async (c) => {
+    const userId = c.get("userId");
     const id = c.req.param("id");
     const body = c.req.valid("json");
 
-    const [existing] = await db.select().from(videoSessions).where(eq(videoSessions.id, id));
+    const [existing] = await db.select().from(videoSessions).where(and(eq(videoSessions.id, id), eq(videoSessions.userId, userId)));
     if (!existing) return err(c, "Video session not found", 404);
 
     const updateData: Partial<typeof videoSessions.$inferInsert> = { updatedAt: new Date() };
@@ -79,16 +84,17 @@ export const videosRouter = new Hono()
     if (body.ideas !== undefined) updateData.ideas = body.ideas;
     if (body.tags !== undefined) updateData.tags = JSON.stringify(body.tags);
 
-    await db.update(videoSessions).set(updateData).where(eq(videoSessions.id, id));
+    await db.update(videoSessions).set(updateData).where(and(eq(videoSessions.id, id), eq(videoSessions.userId, userId)));
     const [updated] = await db.select().from(videoSessions).where(eq(videoSessions.id, id));
     return ok(c, toVideoView(updated));
   })
 
   // DELETE /videos/:id
   .delete("/:id", async (c) => {
+    const userId = c.get("userId");
     const id = c.req.param("id");
-    const [existing] = await db.select().from(videoSessions).where(eq(videoSessions.id, id));
+    const [existing] = await db.select().from(videoSessions).where(and(eq(videoSessions.id, id), eq(videoSessions.userId, userId)));
     if (!existing) return err(c, "Video session not found", 404);
-    await db.delete(videoSessions).where(eq(videoSessions.id, id));
+    await db.delete(videoSessions).where(and(eq(videoSessions.id, id), eq(videoSessions.userId, userId)));
     return ok(c, { id });
   });
