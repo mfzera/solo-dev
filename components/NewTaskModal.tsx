@@ -1,9 +1,9 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { X } from "lucide-react";
-import { createTask } from "@/lib/actions";
-import type { Tag, TaskStatus } from "@/lib/types";
-import { ALL_TAGS, ALL_STATUSES, STATUS_LABELS } from "@/lib/types";
+import { createTask, getTags } from "@/lib/actions";
+import type { Tag, TaskStatus, TagConfig } from "@/lib/types";
+import { ALL_STATUSES, STATUS_LABELS } from "@/lib/types";
 
 export default function NewTaskModal({ open, onClose, initialStatus = "ideas" }: { open: boolean; onClose: () => void; initialStatus?: TaskStatus }) {
   const [title, setTitle] = useState("");
@@ -13,10 +13,14 @@ export default function NewTaskModal({ open, onClose, initialStatus = "ideas" }:
   const [description, setDescription] = useState("");
   const [flagged, setFlagged] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [tagConfigs, setTagConfigs] = useState<TagConfig[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (open) setStatus(initialStatus);
+    if (open) {
+      setStatus(initialStatus);
+      getTags().then(setTagConfigs);
+    }
   }, [open, initialStatus]);
 
   if (!open) return null;
@@ -33,10 +37,6 @@ export default function NewTaskModal({ open, onClose, initialStatus = "ideas" }:
     setTitle(""); setStatus("ideas"); setSelectedTags([]); setEstimate(""); setDescription(""); setFlagged(false);
     setSubmitting(false);
     onClose();
-  };
-
-  const TAG_COLORS: Record<Tag, string> = {
-    frontend: "#4ade80", backend: "#60a5fa", infra: "#a78bfa", bug: "#f87171", auth: "#fb923c",
   };
 
   return (
@@ -88,16 +88,16 @@ export default function NewTaskModal({ open, onClose, initialStatus = "ideas" }:
           <div style={{ marginBottom: 12 }}>
             <label style={{ fontSize: 11, color: "#666", display: "block", marginBottom: 4 }}>Tags</label>
             <div className="flex flex-wrap gap-1.5">
-              {ALL_TAGS.map(tag => (
-                <button type="button" key={tag} onClick={() => toggleTag(tag)}
+              {tagConfigs.map(tc => (
+                <button type="button" key={tc.id} onClick={() => toggleTag(tc.name)}
                   style={{
                     padding: "3px 8px", borderRadius: 4, fontSize: 11, fontWeight: 500,
-                    border: selectedTags.includes(tag) ? `1px solid ${TAG_COLORS[tag]}` : "1px solid #333",
-                    background: selectedTags.includes(tag) ? `${TAG_COLORS[tag]}22` : "transparent",
-                    color: selectedTags.includes(tag) ? TAG_COLORS[tag] : "#888",
+                    border: selectedTags.includes(tc.name) ? `1px solid ${tc.color}` : "1px solid #333",
+                    background: selectedTags.includes(tc.name) ? `${tc.color}22` : "transparent",
+                    color: selectedTags.includes(tc.name) ? tc.color : "#888",
                     cursor: "pointer",
                   }}>
-                  {tag}
+                  {tc.name}
                 </button>
               ))}
             </div>

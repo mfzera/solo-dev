@@ -1,17 +1,9 @@
 "use client";
 import { useState, useEffect, useTransition } from "react";
 import { X, Flag, AlertCircle, Archive, Trash2, User, Calendar, Clock } from "lucide-react";
-import { updateTask, archiveTask, deleteTask } from "@/lib/actions";
-import type { Tag, TaskStatus, TaskView } from "@/lib/types";
-import { ALL_TAGS, ALL_STATUSES, STATUS_LABELS } from "@/lib/types";
-
-const TAG_COLORS: Record<Tag, string> = {
-  frontend: "#4ade80",
-  backend: "#60a5fa",
-  infra: "#a78bfa",
-  bug: "#f87171",
-  auth: "#fb923c",
-};
+import { updateTask, archiveTask, deleteTask, getTags } from "@/lib/actions";
+import type { Tag, TaskStatus, TaskView, TagConfig } from "@/lib/types";
+import { ALL_STATUSES, STATUS_LABELS } from "@/lib/types";
 
 function toDateInput(iso: string | null): string {
   if (!iso) return "";
@@ -38,6 +30,11 @@ export default function EditTaskModal({
   const [progress, setProgress] = useState(task.progress ?? 0);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [tagConfigs, setTagConfigs] = useState<TagConfig[]>([]);
+
+  useEffect(() => {
+    getTags().then(setTagConfigs);
+  }, []);
 
   // Close on Escape
   useEffect(() => {
@@ -225,19 +222,19 @@ export default function EditTaskModal({
           <div>
             <div style={{ fontSize: 10, fontWeight: 600, color: "#555", letterSpacing: "0.07em", marginBottom: 8 }}>TAGS</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {ALL_TAGS.map(tag => (
+              {tagConfigs.map(tc => (
                 <button
-                  key={tag}
+                  key={tc.id}
                   type="button"
-                  onClick={() => toggleTag(tag)}
+                  onClick={() => toggleTag(tc.name)}
                   style={{
                     padding: "3px 10px", borderRadius: 4, fontSize: 11, fontWeight: 500,
-                    border: selectedTags.includes(tag) ? `1px solid ${TAG_COLORS[tag]}` : "1px solid #2e2e2e",
-                    background: selectedTags.includes(tag) ? `${TAG_COLORS[tag]}22` : "#111",
-                    color: selectedTags.includes(tag) ? TAG_COLORS[tag] : "#666",
+                    border: selectedTags.includes(tc.name) ? `1px solid ${tc.color}` : "1px solid #2e2e2e",
+                    background: selectedTags.includes(tc.name) ? `${tc.color}22` : "#111",
+                    color: selectedTags.includes(tc.name) ? tc.color : "#666",
                     cursor: "pointer",
                   }}>
-                  {tag}
+                  {tc.name}
                 </button>
               ))}
             </div>

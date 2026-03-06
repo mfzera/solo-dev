@@ -7,6 +7,13 @@ datasource db {
   provider = "sqlite"
 }
 
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
 model Task {
   id          String    @id @default(cuid())
   title       String
@@ -51,4 +58,24 @@ model ActivityLog {
   taskId     String?
   action     String
   occurredAt DateTime @default(now())
+}
+
+model TagConfig {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model VideoSession {
+  id        String   @id @default(cuid())
+  title     String
+  status    String   @default("idea")
+  script    String?
+  ideas     String?
+  tags      String   @default("[]")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

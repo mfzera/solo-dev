@@ -2,13 +2,15 @@
 
 import { prisma } from "./db";
 import { serializeTags } from "./helpers";
-import type { Tag, TaskStatus } from "./types";
+import type { Tag, TaskStatus, VideoStatus } from "./types";
 import { revalidatePath } from "next/cache";
+import type { TagConfig } from "./types";
 
 function revalidateAll() {
   revalidatePath("/");
   revalidatePath("/planning");
   revalidatePath("/archive");
+  revalidatePath("/videos");
 }
 
 // --- TASK CRUD ---
@@ -149,6 +151,26 @@ export async function moveTask(taskId: string, newStatus: TaskStatus, newSortOrd
   revalidateAll();
 }
 
+// --- ACTIVITY ---
+
+export async function fetchCompletedTasksOnDay(date: string): Promise<{ id: string; title: string; tags: string }[]> {
+  const dayStart = new Date(date + "T00:00:00.000Z");
+  const dayEnd = new Date(date + "T23:59:59.999Z");
+
+  const logs = await prisma.activityLog.findMany({
+    where: { action: "completed", occurredAt: { gte: dayStart, lte: dayEnd }, taskId: { not: null } },
+    select: { taskId: true },
+  });
+
+  const taskIds = logs.map(l => l.taskId!);
+  if (taskIds.length === 0) return [];
+
+  return prisma.task.findMany({
+    where: { id: { in: taskIds } },
+    select: { id: true, title: true, tags: true },
+  });
+}
+
 // --- QUICK CAPTURE ---
 
 export async function addQuickCapture(text: string) {
@@ -221,5 +243,63 @@ export async function toggleWeeklyPlanDone(entryId: string) {
 
 export async function removeWeeklyPlanEntry(entryId: string) {
   await prisma.weeklyPlanEntry.delete({ where: { id: entryId } });
+  revalidateAll();
+}
+
+// --- TAGS ---
+
+export async function getTags(): Promise<TagConfig[]> {
+  const tags = await prisma.tagConfig.findMany({ orderBy: { sortOrder: "asc" } });
+  return tags.map(t => ({ id: t.id, name: t.name, color: t.color, sortOrder: t.sortOrder }));
+}
+
+export async function createTag(name: string, color: string): Promise<{ error?: string }> {
+  const trimmed = name.trim().toLowerCase();
+  if (!trimmed) return { error: "Name is required" };
+  const existing = await prisma.tagConfig.findUnique({ where: { name: trimmed } });
+  if (existing) return { error: "Tag already exists" };
+  const max = await prisma.tagConfig.aggregate({ _max: { sortOrder: true } });
+  await prisma.tagConfig.create({ data: { name: trimmed, color, sortOrder: (max._max.sortOrder ?? -1) + 1 } });
+  revalidateAll();
+  return {};
+}
+
+export async function updateTag(id: string, name: string, color: string): Promise<{ error?: string }> {
+  const trimmed = name.trim().toLowerCase();
+  if (!trimmed) return { error: "Name is required" };
+  const existing = await prisma.tagConfig.findFirst({ where: { name: trimmed, id: { not: id } } });
+  if (existing) return { error: "Tag already exists" };
+  await prisma.tagConfig.update({ where: { id }, data: { name: trimmed, color } });
+  revalidateAll();
+  return {};
+}
+
+export async function deleteTag(id: string) {
+  await prisma.tagConfig.delete({ where: { id } });
+  revalidateAll();
+}
+
+// --- VIDEO SESSIONS ---
+
+export async function createVideoSession(title: string) {
+  const max = await prisma.videoSession.aggregate({ _max: { sortOrder: true } });
+  await prisma.videoSession.create({
+    data: { title, sortOrder: (max._max.sortOrder ?? -1) + 1 },
+  });
+  revalidateAll();
+}
+
+export async function updateVideoSession(id: string, data: {
+  title?: string;
+  status?: VideoStatus;
+  script?: string | null;
+  ideas?: string | null;
+}) {
+  await prisma.videoSession.update({ where: { id }, data });
+  revalidateAll();
+}
+
+export async function deleteVideoSession(id: string) {
+  await prisma.videoSession.delete({ where: { id } });
   revalidateAll();
 }

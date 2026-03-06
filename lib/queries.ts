@@ -1,6 +1,6 @@
 import { prisma } from "./db";
 import { parseTags } from "./helpers";
-import type { TaskStatus, TaskView, StatsData, ActivityData, WeeklyPlanView, QuickCaptureView, Tag } from "./types";
+import type { TaskStatus, TaskView, StatsData, ActivityData, ActivityCell, WeeklyPlanView, QuickCaptureView, Tag, VideoSessionView, VideoStatus } from "./types";
 import { ALL_STATUSES } from "./types";
 
 function toTaskView(t: {
@@ -63,22 +63,23 @@ export async function getStatsData(): Promise<StatsData> {
 
   const inProgress = tasks.filter(t => t.status === "in-progress").length;
 
-  // Dev distribution
-  const tagCounts: Record<string, number> = { Frontend: 0, Backend: 0, Infra: 0, Bugs: 0 };
+  // Dev distribution — driven by TagConfig
+  const tagConfigs = await prisma.tagConfig.findMany({ orderBy: { sortOrder: "asc" } });
+  const tagCounts: Record<string, number> = {};
+  for (const tc of tagConfigs) tagCounts[tc.name] = 0;
   for (const t of tasks) {
     const tags = parseTags(t.tags);
-    if (tags.includes("frontend")) tagCounts.Frontend++;
-    if (tags.includes("backend")) tagCounts.Backend++;
-    if (tags.includes("infra")) tagCounts.Infra++;
-    if (tags.includes("bug")) tagCounts.Bugs++;
+    for (const tag of tags) {
+      if (tag in tagCounts) tagCounts[tag]++;
+    }
   }
   const maxTag = Math.max(...Object.values(tagCounts), 1);
-  const devDistribution = [
-    { label: "Frontend", count: tagCounts.Frontend, color: "#4ade80", max: maxTag },
-    { label: "Backend",  count: tagCounts.Backend,  color: "#60a5fa", max: maxTag },
-    { label: "Infra",    count: tagCounts.Infra,    color: "#a78bfa", max: maxTag },
-    { label: "Bugs",     count: tagCounts.Bugs,     color: "#f87171", max: maxTag },
-  ];
+  const devDistribution = tagConfigs.map(tc => ({
+    label: tc.name.charAt(0).toUpperCase() + tc.name.slice(1),
+    count: tagCounts[tc.name],
+    color: tc.color,
+    max: maxTag,
+  }));
 
   // Progress
   const totalTasks = tasks.length;
@@ -126,15 +127,17 @@ export async function getActivityData(): Promise<ActivityData> {
   const startOfToday = new Date(now);
   startOfToday.setHours(0, 0, 0, 0);
 
-  // 26 weeks = 182 days
-  const startDate = new Date(startOfToday);
-  startDate.setDate(startDate.getDate() - 181);
-  // Align to Monday
-  const startDow = startDate.getDay();
-  startDate.setDate(startDate.getDate() - ((startDow + 6) % 7));
+  // Find the Monday of the current week
+  const currentWeekMonday = new Date(startOfToday);
+  const currentDow = currentWeekMonday.getDay();
+  currentWeekMonday.setDate(currentWeekMonday.getDate() - ((currentDow + 6) % 7));
+
+  // Start 51 weeks before current week Monday → 52 columns total (51 full past weeks + current week)
+  const startDate = new Date(currentWeekMonday);
+  startDate.setDate(startDate.getDate() - 51 * 7);
 
   const logs = await prisma.activityLog.findMany({
-    where: { occurredAt: { gte: startDate } },
+    where: { occurredAt: { gte: startDate }, action: "completed" },
     select: { occurredAt: true },
   });
 
@@ -146,7 +149,7 @@ export async function getActivityData(): Promise<ActivityData> {
   }
 
   // Build grid (26 weeks x 7 days)
-  const grid: number[][] = [];
+  const grid: ActivityCell[][] = [];
   const weekCounts: number[] = [];
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const dayNameCounts: Record<string, number> = {};
@@ -157,18 +160,18 @@ export async function getActivityData(): Promise<ActivityData> {
   let streakCounting = true;
   const monthCounts = new Map<string, number>();
 
-  for (let w = 0; w < 26; w++) {
-    const week: number[] = [];
+  for (let w = 0; w < 52; w++) {
+    const week: ActivityCell[] = [];
     let weekTotal = 0;
     for (let d = 0; d < 7; d++) {
       const date = new Date(startDate);
       date.setDate(date.getDate() + w * 7 + d);
+      const key = date.toISOString().slice(0, 10);
       if (date > now) {
-        week.push(0);
+        week.push({ date: key, level: 0, count: 0 });
         continue;
       }
       totalDays++;
-      const key = date.toISOString().slice(0, 10);
       const count = dayCounts.get(key) || 0;
       totalShipped += count;
       weekTotal += count;
@@ -176,7 +179,7 @@ export async function getActivityData(): Promise<ActivityData> {
 
       // Heatmap level (0-4)
       const level = count === 0 ? 0 : count <= 1 ? 1 : count <= 2 ? 2 : count <= 3 ? 3 : 4;
-      week.push(level);
+      week.push({ date: key, level, count });
 
       // Day name stats
       const dayName = dayNames[date.getDay()];
@@ -190,8 +193,10 @@ export async function getActivityData(): Promise<ActivityData> {
     grid.push(week);
   }
 
-  // Streak (counting backwards from today)
-  for (let d = 0; d >= -182 && streakCounting; d--) {
+  // Streak (counting backwards from today, skip today if no activity yet)
+  const todayKey = startOfToday.toISOString().slice(0, 10);
+  const startOffset = (dayCounts.get(todayKey) || 0) > 0 ? 0 : -1;
+  for (let d = startOffset; d >= -364 && streakCounting; d--) {
     const date = new Date(startOfToday);
     date.setDate(date.getDate() + d);
     const key = date.toISOString().slice(0, 10);
@@ -219,11 +224,18 @@ export async function getActivityData(): Promise<ActivityData> {
   const weeksActive = Math.max(totalDays / 7, 1);
   const avgPerWeek = Math.round((totalShipped / weeksActive) * 10) / 10;
 
-  // Monthly output (last 7 months)
-  const months = ["Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+  // Monthly output (last 12 months, dynamic)
+  const months: string[] = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now);
+    d.setMonth(d.getMonth() - i);
+    months.push(d.toLocaleDateString("en", { month: "short" }));
+  }
+  const currentMonth = now.toLocaleDateString("en", { month: "short" });
   const monthlyOutput = months.map(m => ({
     month: m,
     value: monthCounts.get(m) || 0,
+    isCurrent: m === currentMonth,
   }));
 
   return {
@@ -295,4 +307,28 @@ export async function getTimelineTasks(): Promise<TaskView[]> {
     orderBy: { createdAt: "asc" },
   });
   return tasks.map(toTaskView);
+}
+
+export async function getTagConfigs(): Promise<import("./types").TagConfig[]> {
+  const tags = await prisma.tagConfig.findMany({ orderBy: { sortOrder: "asc" } });
+  return tags.map(t => ({ id: t.id, name: t.name, color: t.color, sortOrder: t.sortOrder }));
+}
+
+function toVideoView(v: {
+  id: string; title: string; status: string; script: string | null;
+  ideas: string | null; tags: string; sortOrder: number;
+  createdAt: Date; updatedAt: Date;
+}): VideoSessionView {
+  return {
+    ...v,
+    status: v.status as VideoStatus,
+    tags: parseTags(v.tags),
+    createdAt: v.createdAt.toISOString(),
+    updatedAt: v.updatedAt.toISOString(),
+  };
+}
+
+export async function getVideoSessions(): Promise<VideoSessionView[]> {
+  const videos = await prisma.videoSession.findMany({ orderBy: { sortOrder: "asc" } });
+  return videos.map(toVideoView);
 }

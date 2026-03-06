@@ -1,4 +1,4 @@
-import { getTimelineTasks } from "@/lib/queries";
+import { getTimelineTasks, getTagConfigs } from "@/lib/queries";
 import PlanningView, { type TimelineTask, type TimelineDay, type TimelineStats } from "@/components/PlanningView";
 
 const TODAY_COL = 9;
@@ -6,7 +6,7 @@ const TOTAL_DAYS = 14;
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
 export default async function PlanningPage() {
-  const rawTasks = await getTimelineTasks();
+  const [rawTasks, tagConfigs] = await Promise.all([getTimelineTasks(), getTagConfigs()]);
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -44,7 +44,9 @@ export default async function PlanningPage() {
   const rangeLabel = `${capMonth(days[0].month)} ${days[0].label} – ${capMonth(days[TOTAL_DAYS - 1].month)} ${days[TOTAL_DAYS - 1].label}`;
 
   // Map tasks to timeline
-  const validTags = new Set(["frontend", "backend", "infra", "bug", "auth"]);
+  const tagColorMap = Object.fromEntries(tagConfigs.map(t => [t.name, t.color]));
+  const validTags = new Set(tagConfigs.map(t => t.name));
+  const firstTag = tagConfigs[0]?.name ?? "backend";
   const MS_PER_DAY = 86400000;
 
   const timelineTasks: TimelineTask[] = rawTasks
@@ -68,7 +70,7 @@ export default async function PlanningPage() {
       const ongoing = !completedAt;
 
       const tags: string[] = t.tags.filter(tag => validTags.has(tag));
-      if (tags.length === 0) tags.push("backend");
+      if (tags.length === 0 && firstTag) tags.push(firstTag);
 
       const durationLabel = t.estimate || (spanCols === 1 ? "1d" : `${spanCols}d`);
       const dateStr = createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -102,20 +104,21 @@ export default async function PlanningPage() {
     ? completedTasks.reduce((a, b) => a.spanCols < b.spanCols ? a : b)
     : null;
 
-  const tagCounts = { frontend: 0, backend: 0, infra: 0, bug: 0 };
+  const tagCounts: Record<string, number> = {};
+  for (const tc of tagConfigs) tagCounts[tc.name] = 0;
   for (const t of timelineTasks) {
-    if (t.tags.includes("frontend")) tagCounts.frontend++;
-    if (t.tags.includes("backend")) tagCounts.backend++;
-    if (t.tags.includes("infra")) tagCounts.infra++;
-    if (t.tags.includes("bug")) tagCounts.bug++;
+    for (const tag of t.tags) {
+      if (tag in tagCounts) tagCounts[tag]++;
+    }
   }
   const tagTotal = Math.max(Object.values(tagCounts).reduce((a, b) => a + b, 0), 1);
-  const tagDistribution = [
-    { label: "Frontend", pct: Math.round((tagCounts.frontend / tagTotal) * 100), color: "#4ade80" },
-    { label: "Backend",  pct: Math.round((tagCounts.backend  / tagTotal) * 100), color: "#60a5fa" },
-    { label: "Infra",    pct: Math.round((tagCounts.infra    / tagTotal) * 100), color: "#a78bfa" },
-    { label: "Bugs",     pct: Math.round((tagCounts.bug      / tagTotal) * 100), color: "#f87171" },
-  ].filter(t => t.pct > 0);
+  const tagDistribution = tagConfigs
+    .map(tc => ({
+      label: tc.name.charAt(0).toUpperCase() + tc.name.slice(1),
+      pct: Math.round((tagCounts[tc.name] / tagTotal) * 100),
+      color: tagColorMap[tc.name] ?? "#888",
+    }))
+    .filter(t => t.pct > 0);
 
   const stats: TimelineStats = {
     avgDays,

@@ -1,20 +1,24 @@
 "use client";
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Tag, LogOut } from "lucide-react";
+import { logout } from "@/lib/auth-actions";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { formatHeaderDate } from "@/lib/helpers";
 import NewTaskModal from "./NewTaskModal";
+import TagsManagerModal from "./TagsManagerModal";
 
 const NAV = [
-  { label: "Board",    href: "/" },
+  { label: "Board",    href: "/board" },
   { label: "Planning", href: "/planning" },
+  { label: "Videos",   href: "/videos" },
   { label: "Archive",  href: "/archive" },
 ];
 
 export default function Header() {
   const pathname = usePathname();
   const [modalOpen, setModalOpen] = useState(false);
+  const [tagsOpen, setTagsOpen] = useState(false);
 
   return (
     <>
@@ -44,8 +48,34 @@ export default function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <span style={{ color: "#666", fontSize: 12 }}>{formatHeaderDate()}</span>
+          <button
+            onClick={() => setTagsOpen(true)}
+            title="Manage tags"
+            style={{
+              display: "flex", alignItems: "center",
+              background: "transparent", color: "#666",
+              border: "1px solid #2a2a2a", borderRadius: 6,
+              padding: "5px 8px", fontSize: 12,
+              cursor: "pointer",
+            }}>
+            <Tag size={13} />
+          </button>
+          <form action={logout}>
+            <button
+              type="submit"
+              title="Sign out"
+              style={{
+                display: "flex", alignItems: "center",
+                background: "transparent", color: "#666",
+                border: "1px solid #2a2a2a", borderRadius: 6,
+                padding: "5px 8px", fontSize: 12,
+                cursor: "pointer",
+              }}>
+              <LogOut size={13} />
+            </button>
+          </form>
           <button
             onClick={() => setModalOpen(true)}
             style={{
@@ -61,6 +91,7 @@ export default function Header() {
         </div>
       </header>
       <NewTaskModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <TagsManagerModal open={tagsOpen} onClose={() => setTagsOpen(false)} />
     </>
   );
 }
