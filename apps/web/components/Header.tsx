@@ -32,8 +32,8 @@ export default function Header({ user }: Props) {
               className="flex items-center justify-between px-4 h-10 sticky top-0 z-50">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <div style={{ width: 22, height: 22, background: "#d4702a", borderRadius: 5 }} />
-            <span style={{ fontWeight: 600, fontSize: 13, color: "#e8e8e8" }}>solo.dev</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/name.svg" alt="honja" style={{ height: 18, width: "auto", display: "block" }} />
           </div>
           <nav className="flex items-center gap-1">
             {NAV.map(({ label, href }) => {
@@ -84,7 +84,7 @@ export default function Header({ user }: Props) {
             onClick={() => setModalOpen(true)}
             style={{
               display: "flex", alignItems: "center", gap: 5,
-              background: "#d4702a", color: "#fff",
+              background: "#c0392b", color: "#fff",
               border: "none", borderRadius: 6,
               padding: "5px 12px", fontSize: 12, fontWeight: 600,
               cursor: "pointer",

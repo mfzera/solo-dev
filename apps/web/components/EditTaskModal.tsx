@@ -123,8 +123,8 @@ export default function EditTaskModal({
                 ))}
               </select>
               {flagged && (
-                <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: "#d4702a" }}>
-                  <Flag size={10} fill="#d4702a" /> Flagged
+                <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: "#c0392b" }}>
+                  <Flag size={10} fill="#c0392b" /> Flagged
                 </span>
               )}
               {blocked && (
@@ -238,10 +238,10 @@ export default function EditTaskModal({
               min={0} max={100} step={5}
               value={progress}
               onChange={e => setProgress(Number(e.target.value))}
-              style={{ width: "100%", accentColor: "#d4702a" }}
+              style={{ width: "100%", accentColor: "#c0392b" }}
             />
             <div style={{ background: "#252525", borderRadius: 3, height: 4, marginTop: 4, overflow: "hidden" }}>
-              <div style={{ width: `${progress}%`, background: "#d4702a", height: "100%", borderRadius: 3, transition: "width 0.1s" }} />
+              <div style={{ width: `${progress}%`, background: "#c0392b", height: "100%", borderRadius: 3, transition: "width 0.1s" }} />
             </div>
           </div>
 
@@ -252,7 +252,7 @@ export default function EditTaskModal({
                 type="checkbox"
                 checked={flagged}
                 onChange={e => setFlagged(e.target.checked)}
-                style={{ accentColor: "#d4702a" }}
+                style={{ accentColor: "#c0392b" }}
               />
               <span style={{ fontSize: 12, color: "#aaa" }}>Important</span>
             </label>
@@ -338,7 +338,7 @@ export default function EditTaskModal({
               onClick={handleSave}
               disabled={!title.trim() || isPending}
               style={{
-                background: title.trim() ? "#d4702a" : "#333",
+                background: title.trim() ? "#c0392b" : "#333",
                 border: "none", borderRadius: 6, padding: "6px 16px",
                 fontSize: 12, fontWeight: 600,
                 color: title.trim() ? "#fff" : "#666",

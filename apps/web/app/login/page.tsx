@@ -26,13 +26,8 @@ export default function LoginPage() {
         style={{ backgroundColor: "#1a1a1a" }}
       >
         <div className="flex items-center gap-2">
-          <div
-            className="w-7 h-7 rounded"
-            style={{ backgroundColor: "#e85d26" }}
-          />
-          <span className="text-white font-semibold text-sm tracking-wide">
-            solo.dev
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/name.svg" alt="honja" style={{ height: 18, width: "auto", display: "block", filter: "brightness(0) invert(1)" }} />
         </div>
 
         <div>
@@ -42,7 +37,7 @@ export default function LoginPage() {
           >
             Ship without
             <br />
-            <span style={{ color: "#e85d26" }}>the noise.</span>
+            <span style={{ color: "#e74c3c" }}>the noise.</span>
           </h1>
           <p className="text-sm leading-relaxed" style={{ color: "#888" }}>
             One workspace for your backlog, timeline, and focus.
@@ -83,7 +78,7 @@ export default function LoginPage() {
           <div>
             <div
               className="text-4xl font-black"
-              style={{ color: "#e85d26", letterSpacing: "-1px" }}
+              style={{ color: "#e74c3c", letterSpacing: "-1px" }}
             >
               14d
             </div>
@@ -175,7 +170,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 name="email"
-                placeholder="you@solo.dev"
+                placeholder="you@honja"
                 required
                 className="w-full px-4 py-3 rounded text-sm outline-none"
                 style={{
@@ -223,7 +218,7 @@ export default function LoginPage() {
               disabled={pending}
               className="w-full py-3 rounded font-semibold text-sm mt-2 transition-opacity"
               style={{
-                backgroundColor: "#e85d26",
+                backgroundColor: "#e74c3c",
                 color: "white",
                 opacity: pending ? 0.7 : 1,
               }}

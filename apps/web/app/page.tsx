@@ -37,7 +37,7 @@ function GlitchWord({ children }: { children: string }) {
   return (
     <span
       className="relative inline-block"
-      style={{ color: '#FF5A1F' }}
+      style={{ color: '#c0392b' }}
       onMouseEnter={() => setActive(true)}
       onMouseLeave={() => setActive(false)}
     >
@@ -79,7 +79,7 @@ export default function HomePage() {
     if (!el) return
 
     const onMove = (e: MouseEvent) => {
-      el.style.background = `radial-gradient(700px circle at ${e.clientX}px ${e.clientY}px, rgba(255,90,31,0.06) 0%, transparent 55%), ${base}`
+      el.style.background = `radial-gradient(700px circle at ${e.clientX}px ${e.clientY}px, rgba(192,57,43,0.06) 0%, transparent 55%), ${base}`
     }
     window.addEventListener('mousemove', onMove)
     return () => window.removeEventListener('mousemove', onMove)
@@ -109,25 +109,13 @@ export default function HomePage() {
 
           {/* Logo */}
           <motion.div
-            className="flex items-center gap-2 mb-2"
+            className="mb-2"
             initial={{ opacity: 0, y: -18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
           >
-            <motion.div
-              className="w-7 h-7 rounded"
-              style={{ backgroundColor: '#FF5A1F' }}
-              whileHover={{ rotate: 90, scale: 1.1 }}
-              transition={{ duration: 0.35, ease: 'easeInOut' }}
-            />
-            <motion.span
-              className="font-semibold text-sm tracking-wide"
-              style={{ color: '#0B0B0B' }}
-              whileHover={{ letterSpacing: '0.08em' }}
-              transition={{ duration: 0.25 }}
-            >
-              solo.dev
-            </motion.span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/name.svg" alt="honja" style={{ height: 28, width: 'auto', display: 'block', filter: 'brightness(0)' }} />
           </motion.div>
 
           {/* Headline */}
@@ -174,7 +162,7 @@ export default function HomePage() {
               <Link href="/login" style={{ textDecoration: 'none' }}>
                 <motion.div
                   className="relative px-9 py-3 rounded font-semibold text-sm overflow-hidden"
-                  style={{ backgroundColor: '#FF5A1F', color: 'white' }}
+                  style={{ backgroundColor: '#c0392b', color: 'white' }}
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.97 }}
                   transition={{ duration: 0.2, ease: 'easeOut' }}
@@ -193,7 +181,7 @@ export default function HomePage() {
                   <motion.span
                     className="absolute inset-0 rounded"
                     whileHover={{
-                      boxShadow: '0 0 28px rgba(255,90,31,0.55), 0 4px 16px rgba(255,90,31,0.35)',
+                      boxShadow: '0 0 28px rgba(192,57,43,0.55), 0 4px 16px rgba(192,57,43,0.35)',
                     }}
                     transition={{ duration: 0.25 }}
                   />

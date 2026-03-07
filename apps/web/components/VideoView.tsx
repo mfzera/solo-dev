@@ -124,7 +124,7 @@ export default function VideoView({ initialVideos }: Props) {
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-            <Video size={14} color="#d4702a" />
+            <Video size={14} color="#c0392b" />
             <span style={{ fontSize: 12, fontWeight: 600, color: "#aaa", letterSpacing: "0.06em" }}>
               VIDEOS
             </span>
@@ -154,7 +154,7 @@ export default function VideoView({ initialVideos }: Props) {
               style={{
                 width: "100%", textAlign: "left",
                 background: selectedId === v.id ? "#1e1e1e" : "transparent",
-                border: "none", borderLeft: selectedId === v.id ? "2px solid #d4702a" : "2px solid transparent",
+                border: "none", borderLeft: selectedId === v.id ? "2px solid #c0392b" : "2px solid transparent",
                 padding: "8px 14px",
                 cursor: "pointer",
                 display: "flex", flexDirection: "column", gap: 4,
@@ -176,7 +176,7 @@ export default function VideoView({ initialVideos }: Props) {
                 onBlur={handleCreate}
                 placeholder="Video title..."
                 style={{
-                  width: "100%", background: "#1e1e1e", border: "1px solid #d4702a",
+                  width: "100%", background: "#1e1e1e", border: "1px solid #c0392b",
                   borderRadius: 5, padding: "6px 8px", color: "#e8e8e8",
                   fontSize: 12, outline: "none",
                   boxSizing: "border-box",
@@ -191,7 +191,7 @@ export default function VideoView({ initialVideos }: Props) {
             onClick={() => setAdding(true)}
             style={{
               width: "100%", display: "flex", alignItems: "center", gap: 6,
-              background: "#d4702a", border: "none", borderRadius: 6,
+              background: "#c0392b", border: "none", borderRadius: 6,
               color: "#fff", fontSize: 12, fontWeight: 600,
               padding: "7px 12px", cursor: "pointer",
             }}>
@@ -328,7 +328,7 @@ function VideoEditor({
             style={{
               display: "flex", alignItems: "center", gap: 6,
               background: "transparent", border: "none",
-              borderBottom: tab === key ? "2px solid #d4702a" : "2px solid transparent",
+              borderBottom: tab === key ? "2px solid #c0392b" : "2px solid transparent",
               color: tab === key ? "#e8e8e8" : "#555",
               fontSize: 12, fontWeight: tab === key ? 600 : 400,
               padding: "10px 14px 8px", cursor: "pointer",
@@ -337,7 +337,7 @@ function VideoEditor({
             <Icon size={13} />
             {label}
             {key === "script" && video.script && (
-              <span style={{ background: "#d4702a22", color: "#d4702a", borderRadius: 10, fontSize: 10, padding: "0 5px" }}>
+              <span style={{ background: "#c0392b22", color: "#c0392b", borderRadius: 10, fontSize: 10, padding: "0 5px" }}>
                 {video.script.length > 0 ? "✓" : ""}
               </span>
             )}

@@ -68,21 +68,21 @@ function TaskCard({ task, status, index, onArchive, onDelete, onEdit, tagConfigs
                   <Check size={9} color="#4ade80" strokeWidth={3} />
                 </div>
               ) : isInProgress ? (
-                <div style={{ width: 14, height: 14, borderRadius: "50%", border: `1.5px solid ${task.flagged ? "#d4702a" : "#555"}` }} />
+                <div style={{ width: 14, height: 14, borderRadius: "50%", border: `1.5px solid ${task.flagged ? "#c0392b" : "#555"}` }} />
               ) : null}
             </div>
             <span style={{ flex: 1, fontSize: 12, color: isDone ? "#666" : "#d8d8d8", lineHeight: 1.45, textDecoration: isDone ? "line-through" : "none" }}>
               {task.title}
             </span>
             <div className="flex items-center gap-1">
-              {task.flagged && <Flag size={11} color="#d4702a" fill="#d4702a" />}
+              {task.flagged && <Flag size={11} color="#c0392b" fill="#c0392b" />}
               {task.estimate && <span style={{ color: "#555", fontSize: 11, whiteSpace: "nowrap" }}>{task.estimate}</span>}
             </div>
           </div>
           {task.description && <div style={{ fontSize: 11, color: "#666", marginBottom: 6, lineHeight: 1.4 }}>{task.description}</div>}
           {typeof task.progress === "number" && task.progress > 0 && (
             <div style={{ background: "#2a2a2a", borderRadius: 2, height: 3, marginBottom: 6, overflow: "hidden" }}>
-              <div style={{ width: `${task.progress}%`, background: task.flagged ? "#d4702a" : "#555", height: "100%", borderRadius: 2 }} />
+              <div style={{ width: `${task.progress}%`, background: task.flagged ? "#c0392b" : "#555", height: "100%", borderRadius: 2 }} />
             </div>
           )}
           {task.tags.length > 0 && (
@@ -131,7 +131,7 @@ function Column({ id, label, tasks, wip, onAddTask, onArchive, onDelete, onEdit,
     <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
       <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
         <div className="flex items-center gap-1.5">
-          {isInProgress && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#d4702a" }} />}
+          {isInProgress && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#c0392b" }} />}
           <span style={{ fontSize: 11, fontWeight: 600, color: "#888", letterSpacing: "0.05em" }}>{label}</span>
           <span style={{ fontSize: 11, color: "#555" }}>{count}</span>
           {isInProgress && wip && <span style={{ fontSize: 11, color: "#555" }}>{count}/{wip}</span>}
@@ -143,14 +143,14 @@ function Column({ id, label, tasks, wip, onAddTask, onArchive, onDelete, onEdit,
         )}
       </div>
       {wipReached && (
-        <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#d4702a", padding: "4px 0" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#c0392b", padding: "4px 0" }}>
           <AlertCircle size={11} /> WIP limit reached · {wip} max
         </div>
       )}
       <Droppable droppableId={id}>
         {(provided, snapshot) => (
           <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col gap-2"
-            style={{ minHeight: 40, borderRadius: 6, background: snapshot.isDraggingOver ? "rgba(212,112,42,0.05)" : "transparent", transition: "background 0.15s", padding: snapshot.isDraggingOver ? 4 : 0 }}>
+            style={{ minHeight: 40, borderRadius: 6, background: snapshot.isDraggingOver ? "rgba(192,57,43,0.05)" : "transparent", transition: "background 0.15s", padding: snapshot.isDraggingOver ? 4 : 0 }}>
             {tasks.map((task, index) => (
               <TaskCard key={task.id} task={task} status={id} index={index}
                 onArchive={onArchive} onDelete={onDelete} onEdit={onEdit} tagConfigs={tagConfigs} />
@@ -279,19 +279,19 @@ export default function KanbanBoard({ tasks, tagConfigs = [] }: { tasks: Record<
             <span style={{ color: "#555", fontSize: 12 }}>Week {weekNum} · SaaS Builder Pro</span>
             {activeFilters > 0 && (
               <button onClick={() => setFilter(EMPTY_FILTER)}
-                style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(212,112,42,0.12)", border: "1px solid #d4702a", borderRadius: 10, padding: "2px 8px", fontSize: 11, color: "#d4702a", cursor: "pointer" }}>
+                style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(192,57,43,0.12)", border: "1px solid #c0392b", borderRadius: 10, padding: "2px 8px", fontSize: 11, color: "#c0392b", cursor: "pointer" }}>
                 {activeFilters} filter{activeFilters > 1 ? "s" : ""} active <X size={10} />
               </button>
             )}
           </div>
           <div className="flex items-center gap-2">
             <button ref={filterBtnRef} onClick={() => { setFilterOpen(o => !o); setGroupOpen(false); }}
-              style={{ display: "flex", alignItems: "center", gap: 5, background: filterOpen || activeFilters > 0 ? "rgba(212,112,42,0.1)" : "#1e1e1e", border: `1px solid ${filterOpen || activeFilters > 0 ? "#d4702a" : "#333"}`, borderRadius: 5, padding: "4px 10px", color: filterOpen || activeFilters > 0 ? "#d4702a" : "#aaa", fontSize: 12, cursor: "pointer" }}>
+              style={{ display: "flex", alignItems: "center", gap: 5, background: filterOpen || activeFilters > 0 ? "rgba(192,57,43,0.1)" : "#1e1e1e", border: `1px solid ${filterOpen || activeFilters > 0 ? "#c0392b" : "#333"}`, borderRadius: 5, padding: "4px 10px", color: filterOpen || activeFilters > 0 ? "#c0392b" : "#aaa", fontSize: 12, cursor: "pointer" }}>
               <SlidersHorizontal size={12} /> Filter
-              {activeFilters > 0 && <span style={{ background: "#d4702a", color: "#fff", borderRadius: "50%", width: 16, height: 16, fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{activeFilters}</span>}
+              {activeFilters > 0 && <span style={{ background: "#c0392b", color: "#fff", borderRadius: "50%", width: 16, height: 16, fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{activeFilters}</span>}
             </button>
             <button ref={groupBtnRef} onClick={() => { setGroupOpen(o => !o); setFilterOpen(false); }}
-              style={{ display: "flex", alignItems: "center", gap: 5, background: groupOpen || groupBy !== "status" ? "rgba(212,112,42,0.1)" : "#1e1e1e", border: `1px solid ${groupOpen || groupBy !== "status" ? "#d4702a" : "#333"}`, borderRadius: 5, padding: "4px 10px", color: groupOpen || groupBy !== "status" ? "#d4702a" : "#aaa", fontSize: 12, cursor: "pointer" }}>
+              style={{ display: "flex", alignItems: "center", gap: 5, background: groupOpen || groupBy !== "status" ? "rgba(192,57,43,0.1)" : "#1e1e1e", border: `1px solid ${groupOpen || groupBy !== "status" ? "#c0392b" : "#333"}`, borderRadius: 5, padding: "4px 10px", color: groupOpen || groupBy !== "status" ? "#c0392b" : "#aaa", fontSize: 12, cursor: "pointer" }}>
               <Layers size={12} /> Group
               {groupBy !== "status" && <span style={{ fontSize: 10 }}>· {groupBy}</span>}
             </button>
@@ -331,7 +331,7 @@ export default function KanbanBoard({ tasks, tagConfigs = [] }: { tasks: Record<
             <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
               {ESTIMATE_OPTIONS.map(e => (
                 <button key={e} onClick={() => toggleEstimate(e)}
-                  style={{ padding: "3px 8px", borderRadius: 4, fontSize: 11, border: filter.estimates.includes(e) ? "1px solid #d4702a" : "1px solid #2a2a2a", background: filter.estimates.includes(e) ? "rgba(212,112,42,0.15)" : "transparent", color: filter.estimates.includes(e) ? "#d4702a" : "#888", cursor: "pointer" }}>
+                  style={{ padding: "3px 8px", borderRadius: 4, fontSize: 11, border: filter.estimates.includes(e) ? "1px solid #c0392b" : "1px solid #2a2a2a", background: filter.estimates.includes(e) ? "rgba(192,57,43,0.15)" : "transparent", color: filter.estimates.includes(e) ? "#c0392b" : "#888", cursor: "pointer" }}>
                   {e}
                 </button>
               ))}
@@ -339,7 +339,7 @@ export default function KanbanBoard({ tasks, tagConfigs = [] }: { tasks: Record<
           </div>
           <div style={{ display: "flex", gap: 8, marginBottom: activeFilters > 0 ? 10 : 0 }}>
             <button onClick={() => setFilter(f => ({ ...f, flagged: f.flagged === true ? null : true }))}
-              style={{ flex: 1, padding: "5px 0", borderRadius: 5, fontSize: 11, border: filter.flagged === true ? "1px solid #d4702a" : "1px solid #2a2a2a", background: filter.flagged === true ? "rgba(212,112,42,0.15)" : "transparent", color: filter.flagged === true ? "#d4702a" : "#888", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+              style={{ flex: 1, padding: "5px 0", borderRadius: 5, fontSize: 11, border: filter.flagged === true ? "1px solid #c0392b" : "1px solid #2a2a2a", background: filter.flagged === true ? "rgba(192,57,43,0.15)" : "transparent", color: filter.flagged === true ? "#c0392b" : "#888", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
               <Flag size={11} /> Flagged
             </button>
             <button onClick={() => setFilter(f => ({ ...f, blocked: f.blocked === true ? null : true }))}
@@ -362,7 +362,7 @@ export default function KanbanBoard({ tasks, tagConfigs = [] }: { tasks: Record<
           <div style={{ fontSize: 10, fontWeight: 600, color: "#555", letterSpacing: "0.07em", marginBottom: 10 }}>GROUP BY</div>
           {(["status", "tag", "assignee", "estimate"] as GroupBy[]).map(opt => (
             <button key={opt} onClick={() => { setGroupBy(opt); setGroupOpen(false); }}
-              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "7px 10px", borderRadius: 6, marginBottom: 2, background: groupBy === opt ? "rgba(212,112,42,0.1)" : "transparent", border: groupBy === opt ? "1px solid #d4702a" : "1px solid transparent", color: groupBy === opt ? "#d4702a" : "#aaa", fontSize: 12, cursor: "pointer", textAlign: "left", fontWeight: groupBy === opt ? 600 : 400 }}>
+              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "7px 10px", borderRadius: 6, marginBottom: 2, background: groupBy === opt ? "rgba(192,57,43,0.1)" : "transparent", border: groupBy === opt ? "1px solid #c0392b" : "1px solid transparent", color: groupBy === opt ? "#c0392b" : "#aaa", fontSize: 12, cursor: "pointer", textAlign: "left", fontWeight: groupBy === opt ? 600 : 400 }}>
               {{ status: "Status", tag: "Tag", assignee: "Assignee", estimate: "Estimate" }[opt]}
               {groupBy === opt && <Check size={12} />}
             </button>

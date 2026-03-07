@@ -138,9 +138,9 @@ export default function EstimatePicker({ value, onChange, label, disabled = fals
           <button key={unit} type="button" onClick={() => handlePrimaryUnit(unit)}
             style={{
               flex: 1, padding: "5px 0", borderRadius: 6, fontSize: 11, fontWeight: 600,
-              border: primaryUnit === unit ? "1px solid #d4702a" : "1px solid #2a2a2a",
-              background: primaryUnit === unit ? "rgba(212,112,42,0.15)" : "transparent",
-              color: primaryUnit === unit ? "#d4702a" : "#666",
+              border: primaryUnit === unit ? "1px solid #c0392b" : "1px solid #2a2a2a",
+              background: primaryUnit === unit ? "rgba(192,57,43,0.15)" : "transparent",
+              color: primaryUnit === unit ? "#c0392b" : "#666",
               cursor: "pointer",
             }}>
             {lbl}
@@ -154,9 +154,9 @@ export default function EstimatePicker({ value, onChange, label, disabled = fals
           <button key={n} type="button" onClick={() => handlePrimaryNum(n)}
             style={{
               padding: "5px 10px", borderRadius: 5, fontSize: 12, fontWeight: 500,
-              border: primaryNum === n ? "1px solid #d4702a" : "1px solid #2a2a2a",
-              background: primaryNum === n ? "rgba(212,112,42,0.15)" : "transparent",
-              color: primaryNum === n ? "#d4702a" : "#888",
+              border: primaryNum === n ? "1px solid #c0392b" : "1px solid #2a2a2a",
+              background: primaryNum === n ? "rgba(192,57,43,0.15)" : "transparent",
+              color: primaryNum === n ? "#c0392b" : "#888",
               cursor: "pointer",
             }}>
             {n}{primaryUnit}
@@ -175,9 +175,9 @@ export default function EstimatePicker({ value, onChange, label, disabled = fals
               <button key={n} type="button" onClick={() => handleSecondaryNum(n)}
                 style={{
                   padding: "5px 10px", borderRadius: 5, fontSize: 12, fontWeight: 500,
-                  border: secondaryNum === n ? "1px solid #d4702a" : "1px solid #2a2a2a",
-                  background: secondaryNum === n ? "rgba(212,112,42,0.15)" : "transparent",
-                  color: secondaryNum === n ? "#d4702a" : "#888",
+                  border: secondaryNum === n ? "1px solid #c0392b" : "1px solid #2a2a2a",
+                  background: secondaryNum === n ? "rgba(192,57,43,0.15)" : "transparent",
+                  color: secondaryNum === n ? "#c0392b" : "#888",
                   cursor: "pointer",
                 }}>
                 {n}{secondary.unit}
@@ -194,7 +194,7 @@ export default function EstimatePicker({ value, onChange, label, disabled = fals
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <span style={{ fontSize: 11, color: "#555" }}>Selected</span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#d4702a" }}>{preview}</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#c0392b" }}>{preview}</span>
         </div>
       )}
     </div>
@@ -216,7 +216,7 @@ export default function EstimatePicker({ value, onChange, label, disabled = fals
         style={{
           width: "100%",
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          background: "#111", border: `1px solid ${open ? "#d4702a" : "#2e2e2e"}`,
+          background: "#111", border: `1px solid ${open ? "#c0392b" : "#2e2e2e"}`,
           borderRadius: 6, padding: "6px 10px",
           fontSize: 12, color: value ? "#e8e8e8" : "#555",
           cursor: disabled ? "default" : "pointer",
@@ -224,7 +224,7 @@ export default function EstimatePicker({ value, onChange, label, disabled = fals
         }}
       >
         <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Clock size={12} style={{ color: value ? "#d4702a" : "#444", flexShrink: 0 }} />
+          <Clock size={12} style={{ color: value ? "#c0392b" : "#444", flexShrink: 0 }} />
           {value || "No estimate"}
         </span>
         {value && (

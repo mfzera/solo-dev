@@ -143,7 +143,7 @@ export default function TagsManagerModal({ open, onClose }: { open: boolean; onC
                         }}
                       />
                       <button onClick={handleSaveEdit} disabled={isPending}
-                        style={{ background: "#d4702a", border: "none", borderRadius: 5, padding: "4px 8px", cursor: "pointer", color: "#fff", display: "flex" }}>
+                        style={{ background: "#c0392b", border: "none", borderRadius: 5, padding: "4px 8px", cursor: "pointer", color: "#fff", display: "flex" }}>
                         <Check size={13} />
                       </button>
                       <button onClick={() => setEdit(null)}
@@ -202,7 +202,7 @@ export default function TagsManagerModal({ open, onClose }: { open: boolean; onC
               disabled={!newName.trim() || isPending}
               style={{
                 display: "flex", alignItems: "center", gap: 4,
-                background: newName.trim() ? "#d4702a" : "#333",
+                background: newName.trim() ? "#c0392b" : "#333",
                 color: newName.trim() ? "#fff" : "#555",
                 border: "none", borderRadius: 6, padding: "6px 12px",
                 fontSize: 12, fontWeight: 600, cursor: newName.trim() ? "pointer" : "default",

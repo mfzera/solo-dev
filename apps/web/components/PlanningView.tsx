@@ -186,7 +186,7 @@ function TaskRow({ task, days, todayCol, hoveredTask, setHoveredTask, totalDays 
           <div key={i} style={{
             width: COL_W, flexShrink: 0,
             borderLeft: "1px solid #242424",
-            background: d.col === todayCol ? "rgba(212,112,42,0.05)" : "transparent",
+            background: d.col === todayCol ? "rgba(192,57,43,0.05)" : "transparent",
           }} />
         ))}
         {todayCol >= 0 && todayCol < totalDays && (
@@ -195,7 +195,7 @@ function TaskRow({ task, days, todayCol, hoveredTask, setHoveredTask, totalDays 
             left: todayCol * COL_W,
             top: 0, bottom: 0,
             width: 1,
-            background: "rgba(212,112,42,0.3)",
+            background: "rgba(192,57,43,0.3)",
             pointerEvents: "none",
           }} />
         )}
@@ -449,7 +449,7 @@ export default function PlanningView({ days, monthGroups, tasks, todayCol, range
                     {d.col === todayCol ? (
                       <div style={{
                         width: 22, height: 22, borderRadius: "50%",
-                        background: "#d4702a", color: "#fff",
+                        background: "#c0392b", color: "#fff",
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 11, fontWeight: 700,
                         margin: "2px auto 0",

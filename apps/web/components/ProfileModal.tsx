@@ -42,7 +42,7 @@ function Avatar({ user, size = 64 }: { user: UserProfile; size?: number }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%",
-      background: "#d4702a", color: "#fff",
+      background: "#c0392b", color: "#fff",
       display: "flex", alignItems: "center", justifyContent: "center",
       fontWeight: 700, fontSize: size * 0.35, flexShrink: 0,
       border: "2px solid #2a2a2a",
@@ -223,7 +223,7 @@ export default function ProfileModal({ open, onClose, user, onUpdate }: Props) {
               onClick={handleSave}
               disabled={isPending}
               style={{
-                background: saved ? "#16a34a" : "#d4702a",
+                background: saved ? "#16a34a" : "#c0392b",
                 border: "none", borderRadius: 6, color: "#fff",
                 fontSize: 12, fontWeight: 600,
                 padding: "6px 16px", cursor: isPending ? "default" : "pointer",

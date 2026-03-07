@@ -37,7 +37,7 @@ function Productivity({ doneToday, doneThisWeek, inProgress, weeklyProductivity 
           <div style={{ color: "#666", fontSize: 11, marginTop: 2 }}>done this week</div>
         </div>
         <div>
-          <div style={{ fontSize: 26, fontWeight: 700, color: "#d4702a", lineHeight: 1 }}>{inProgress}</div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: "#c0392b", lineHeight: 1 }}>{inProgress}</div>
           <div style={{ color: "#666", fontSize: 11, marginTop: 2 }}>in progress</div>
         </div>
       </div>
@@ -47,7 +47,7 @@ function Productivity({ doneToday, doneThisWeek, inProgress, weeklyProductivity 
             <div style={{
               width: "100%", borderRadius: 2,
               height: `${(v / max) * 28}px`,
-              background: i === todayIdx ? "#d4702a" : "#333",
+              background: i === todayIdx ? "#c0392b" : "#333",
               minHeight: 2,
             }} />
             <span style={{ color: "#555", fontSize: 10 }}>{days[i]}</span>
@@ -88,7 +88,7 @@ function Progress({ pct, total, completed }: { pct: number; total: number; compl
       <div className="flex items-center gap-4">
         <svg width={88} height={88}>
           <circle cx={44} cy={44} r={r} fill="none" stroke="#333" strokeWidth={8} />
-          <circle cx={44} cy={44} r={r} fill="none" stroke="#d4702a" strokeWidth={8}
+          <circle cx={44} cy={44} r={r} fill="none" stroke="#c0392b" strokeWidth={8}
                   strokeDasharray={circ} strokeDashoffset={offset}
                   strokeLinecap="round" transform="rotate(-90 44 44)" />
           <text x={44} y={44} textAnchor="middle" dominantBaseline="middle"
@@ -100,7 +100,7 @@ function Progress({ pct, total, completed }: { pct: number; total: number; compl
             <div style={{ color: "#666", fontSize: 11 }}>total backlog</div>
           </div>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: "#d4702a" }}>{completed}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: "#c0392b" }}>{completed}</div>
             <div style={{ color: "#666", fontSize: 11 }}>completed</div>
           </div>
         </div>
@@ -115,8 +115,8 @@ function UpNext({ tasks }: { tasks: StatsData["upNext"] }) {
       <div className="flex items-center justify-between mb-3">
         <SectionLabel>UP NEXT</SectionLabel>
         <div className="flex items-center gap-1">
-          <Circle size={7} fill="#d4702a" stroke="none" />
-          <span style={{ color: "#d4702a", fontSize: 11 }}>{tasks.length} queued</span>
+          <Circle size={7} fill="#c0392b" stroke="none" />
+          <span style={{ color: "#c0392b", fontSize: 11 }}>{tasks.length} queued</span>
         </div>
       </div>
       <div className="flex flex-col gap-2">

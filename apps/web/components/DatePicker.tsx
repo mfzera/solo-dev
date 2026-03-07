@@ -220,8 +220,8 @@ export default function DatePicker({
               style={{
                 padding: "5px 0", borderRadius: 5, fontSize: 12,
                 fontWeight: sel ? 700 : tod ? 600 : 400,
-                background: sel ? "#d4702a" : tod ? "rgba(212,112,42,0.15)" : "transparent",
-                color: sel ? "#fff" : dis ? "#333" : tod ? "#d4702a" : "#ccc",
+                background: sel ? "#c0392b" : tod ? "rgba(192,57,43,0.15)" : "transparent",
+                color: sel ? "#fff" : dis ? "#333" : tod ? "#c0392b" : "#ccc",
                 border: "none", cursor: dis ? "default" : "pointer",
               }}
             >
@@ -263,7 +263,7 @@ export default function DatePicker({
           disabled={selectedDay === null}
           style={{
             marginTop: 10, width: "100%",
-            background: selectedDay !== null ? "#d4702a" : "#222",
+            background: selectedDay !== null ? "#c0392b" : "#222",
             border: "none", borderRadius: 6,
             padding: "7px 0", fontSize: 12, fontWeight: 600,
             color: selectedDay !== null ? "#fff" : "#444",
@@ -293,7 +293,7 @@ export default function DatePicker({
         style={{
           width: "100%",
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          background: "#111", border: `1px solid ${open ? "#d4702a" : "#2e2e2e"}`,
+          background: "#111", border: `1px solid ${open ? "#c0392b" : "#2e2e2e"}`,
           borderRadius: 6, padding: "6px 10px",
           fontSize: 12, color: parsed ? "#e8e8e8" : "#555",
           cursor: disabled ? "default" : "pointer",
@@ -302,7 +302,7 @@ export default function DatePicker({
         }}
       >
         <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Calendar size={12} style={{ color: parsed ? "#d4702a" : "#444", flexShrink: 0 }} />
+          <Calendar size={12} style={{ color: parsed ? "#c0392b" : "#444", flexShrink: 0 }} />
           {parsed ? formatDisplay(parsed, withTime) : placeholder}
         </span>
         {parsed && (

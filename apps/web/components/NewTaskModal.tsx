@@ -158,7 +158,7 @@ export default function NewTaskModal({ open, onClose, initialStatus = "ideas" }:
           <button type="submit" disabled={!title.trim() || submitting}
             style={{
               width: "100%", padding: "8px 0", borderRadius: 6,
-              background: title.trim() ? "#d4702a" : "#333",
+              background: title.trim() ? "#c0392b" : "#333",
               color: title.trim() ? "#fff" : "#666",
               border: "none", fontSize: 13, fontWeight: 600, cursor: title.trim() ? "pointer" : "default",
             }}>

@@ -7,8 +7,8 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const dmMono = DM_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-dm-mono" });
 
 export const metadata: Metadata = {
-  title: "solo.dev",
-  description: "Solo developer project management",
+  title: "honja",
+  description: "Honja developer project management",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

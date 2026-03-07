@@ -4,7 +4,7 @@ import type { ActivityData } from "@/lib/types";
 import { fetchCompletedTasksOnDay } from "@/lib/actions";
 import { parseTags } from "@/lib/helpers";
 
-const HEAT_COLORS = ["#1e1e1e", "#3a2410", "#6b3d18", "#9e5a24", "#d4702a"];
+const HEAT_COLORS = ["#1e1e1e", "#3a1010", "#6b1818", "#9e2424", "#c0392b"];
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr + "T12:00:00Z");
@@ -66,7 +66,7 @@ export default function ActivitySection({ data, tagColors = {} }: { data: Activi
             <div className="flex items-center gap-2">
               <span style={{ color: "#666", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em" }}>ACTIVITY</span>
               {streakDays > 0 && (
-                <span style={{ background: "#2e2010", color: "#d4702a", fontSize: 10, padding: "1px 6px", borderRadius: 10, fontWeight: 600 }}>
+                <span style={{ background: "#2e1010", color: "#c0392b", fontSize: 10, padding: "1px 6px", borderRadius: 10, fontWeight: 600 }}>
                   {streakDays}d streak
                 </span>
               )}
@@ -153,7 +153,7 @@ export default function ActivitySection({ data, tagColors = {} }: { data: Activi
                 <div style={{
                   width: "100%", borderRadius: "2px 2px 0 0",
                   height: `${(value / monthlyMax) * 40}px`,
-                  background: isCurrent ? "#d4702a" : "#333",
+                  background: isCurrent ? "#c0392b" : "#333",
                   minHeight: 3,
                 }} />
                 <span style={{ color: "#555", fontSize: 10 }}>{month}</span>
@@ -215,7 +215,7 @@ export default function ActivitySection({ data, tagColors = {} }: { data: Activi
                 const tags = parseTags(task.tags);
                 return (
                   <div key={task.id} className="flex items-start gap-2">
-                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#d4702a", marginTop: 5, flexShrink: 0 }} />
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#c0392b", marginTop: 5, flexShrink: 0 }} />
                     <div>
                       <div style={{ fontSize: 12, color: "#ddd", lineHeight: 1.4 }}>{task.title}</div>
                       {tags.length > 0 && (

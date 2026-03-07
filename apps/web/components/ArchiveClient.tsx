@@ -45,7 +45,7 @@ export default function ArchiveClient({ tasks }: { tasks: TaskView[] }) {
             }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="flex items-center gap-2 mb-1">
-                  {task.flagged && <Flag size={11} color="#d4702a" fill="#d4702a" />}
+                  {task.flagged && <Flag size={11} color="#c0392b" fill="#c0392b" />}
                   <span style={{ fontSize: 13, color: "#bbb", fontWeight: 500 }}>{task.title}</span>
                 </div>
                 {task.description && (
